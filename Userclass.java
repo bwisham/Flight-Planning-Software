@@ -62,6 +62,11 @@ public class Userclass {
     }
 
     public void modify() {
+        if (userDbase.getAllUsers().isEmpty()) {
+            System.out.println("Error: No users in database!");
+            return;
+        }
+        
         System.out.println("Enter user ID to modify:");
         int id = scanner.nextInt();
         scanner.nextLine();
@@ -111,6 +116,11 @@ public class Userclass {
     }
 
     public void delete() {
+        if (userDbase.getAllUsers().isEmpty()) {
+            System.out.println("Error: No users in database!");
+            return;
+        }
+        
         System.out.println("Enter user ID to delete:");
         int id = scanner.nextInt();
         scanner.nextLine();
@@ -205,6 +215,10 @@ class UserDatabase {
     
     public void deleteUser(int id) {
         users.removeIf(user -> user.getId() == id);
+    }
+    
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users);
     }
 }
 
