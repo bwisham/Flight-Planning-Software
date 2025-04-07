@@ -33,8 +33,15 @@ public class Airplane {
     }
 
     public void setAircraftType() {
-        System.out.print("Enter aircraft type: ");
-        this.aircraftType = scanner.nextLine();
+        while (true) {
+            System.out.print("Enter aircraft type (prop/turboprop/jet): ");
+            String input = scanner.nextLine().toLowerCase();
+            if (input.equals("prop") || input.equals("turboprop") || input.equals("jet")) {
+                this.aircraftType = input;
+                break;
+            }
+            System.out.println("Invalid type! Must be prop, turboprop, or jet.");
+        }
     }
 
     public void setFuelSize() {
@@ -117,8 +124,16 @@ public class Airplane {
         if (!modelInput.isEmpty()) model = modelInput;
         
         System.out.print("Aircraft Type (" + aircraftType + "): ");
-        String typeInput = scanner.nextLine();
-        if (!typeInput.isEmpty()) aircraftType = typeInput;
+        String typeInput = scanner.nextLine().toLowerCase();
+        if (!typeInput.isEmpty()) {
+            while (!typeInput.equals("prop") && !typeInput.equals("turboprop") && !typeInput.equals("jet")) {
+                System.out.println("Invalid type! Must be prop, turboprop, or jet.");
+                System.out.print("Aircraft Type (" + aircraftType + "): ");
+                typeInput = scanner.nextLine().toLowerCase();
+                if (typeInput.isEmpty()) break;
+            }
+            if (!typeInput.isEmpty()) aircraftType = typeInput;
+        }
         
         System.out.print("Fuel Size (" + fuelSize + "): ");
         String sizeInput = scanner.nextLine();
@@ -158,6 +173,12 @@ public class Airplane {
         }
         if (fuelSize <= 0 || fuelBurn <= 0 || airspeed <= 0) {
             System.out.println("ERROR: Numerical values must be positive!");
+            System.out.print("Press enter to continue...");
+            scanner.nextLine();
+            return false;
+        }
+        if (!aircraftType.equals("prop") && !aircraftType.equals("turboprop") && !aircraftType.equals("jet")) {
+            System.out.println("ERROR: Invalid aircraft type!");
             System.out.print("Press enter to continue...");
             scanner.nextLine();
             return false;
