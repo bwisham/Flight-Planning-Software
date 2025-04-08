@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -10,11 +11,59 @@ public class Userclass {
     private static final int MAX_NAME_LENGTH = 15;
     private static final int MAX_ADDRESS_LENGTH = 50;
     private static final int MAX_EMAIL_LENGTH = 50;
+    private static final String DB_FILE = "userdb.dat";
     
     public Userclass() {
-        this.userDbase = new UserDatabase();
         this.scanner = new Scanner(System.in);
         this.random = new Random();
+        System.out.println("Initializing database...");
+        this.userDbase = loadDatabase();
+        System.out.println("Database ready. Contains " + userDbase.getAllUsers().size() + " users");
+    }
+    
+    private UserDatabase loadDatabase() {
+        File dbFile = new File(DB_FILE);
+        System.out.println("Database file location: " + dbFile.getAbsolutePath());
+        
+        if (!dbFile.exists()) {
+            System.out.println("No database found. Creating new database file...");
+            UserDatabase newDb = new UserDatabase();
+            saveDatabase(newDb);
+            return newDb;
+        }
+        
+        if (dbFile.length() == 0) {
+            System.out.println("Empty database file detected. Creating new database...");
+            UserDatabase newDb = new UserDatabase();
+            saveDatabase(newDb);
+            return newDb;
+        }
+        
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DB_FILE))) {
+            UserDatabase loadedDb = (UserDatabase) ois.readObject();
+            System.out.println("Database loaded successfully");
+            return loadedDb;
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading database: " + e.getMessage());
+            System.out.println("Creating new database as recovery...");
+            UserDatabase newDb = new UserDatabase();
+            saveDatabase(newDb);
+            return newDb;
+        }
+    }
+    
+    private void saveDatabase(UserDatabase db) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DB_FILE))) {
+            oos.writeObject(db);
+            System.out.println("Database saved successfully");
+        } catch (IOException e) {
+            System.out.println("CRITICAL ERROR: Failed to save database!");
+            System.out.println("Error details: " + e.getMessage());
+        }
+    }
+    
+    private void saveDatabase() {
+        saveDatabase(this.userDbase);
     }
     
     private void pressEnterToContinue() {
@@ -87,6 +136,7 @@ public class Userclass {
             
             User user = new User(userId, fname, lname, pnumber, haddress, eaddress);
             userDbase.addUser(user);
+            saveDatabase();
             System.out.println("Submission successful! Your user ID is: " + userId);
         } else {
             System.out.println("Submission cancelled.");
@@ -167,6 +217,7 @@ public class Userclass {
             );
             
             userDbase.updateUser(id, updatedUser);
+            saveDatabase();
             System.out.println("User updated successfully!");
         } else {
             System.out.println("User not found!");
@@ -195,6 +246,7 @@ public class Userclass {
             
             if (confirmation.equalsIgnoreCase("Y")) {
                 userDbase.deleteUser(id);
+                saveDatabase();
                 System.out.println("User deleted successfully!");
             } else {
                 System.out.println("Deletion cancelled.");
@@ -205,6 +257,30 @@ public class Userclass {
         pressEnterToContinue();
     }
 
+    private void listAllUsers() {
+        System.out.println("\n=== ALL USERS IN SYSTEM ===");
+        List<User> allUsers = userDbase.getAllUsers();
+        
+        if (allUsers.isEmpty()) {
+            System.out.println("No users in the system.");
+            return;
+        }
+        
+        System.out.printf("%-6s %-15s %-15s %-12s %-20s %-20s%n", 
+                         "ID", "First Name", "Last Name", "Phone", "Email", "Address");
+        System.out.println("----------------------------------------------------------------------------");
+        
+        for (User user : allUsers) {
+            System.out.printf("%-6d %-15s %-15s %-12s %-20s %-20s%n",
+                            user.getId(),
+                            user.getFirstName(),
+                            user.getLastName(),
+                            user.getPhoneNumber(),
+                            user.getEmailAddress(),
+                            user.getHomeAddress());
+        }
+    }
+
     public void showMenu() {
         while (true) {
             System.out.println("\nUser Management System");
@@ -212,40 +288,50 @@ public class Userclass {
             System.out.println("2. Modify User");
             System.out.println("3. Delete User");
             System.out.println("4. Exit");
-            System.out.print("Enter your choice: ");
+            System.out.print("Enter your choice (or secret code for admin options): ");
             
-            int choice;
-            try {
-                choice = Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number!");
+            String input = scanner.nextLine();
+            
+            // Check for secret code first
+            if (input.equals("9860")) {
+                listAllUsers();
                 pressEnterToContinue();
                 continue;
             }
             
-            switch (choice) {
-                case 1 -> add();
-                case 2 -> modify();
-                case 3 -> delete();
-                case 4 -> {
-                    System.out.println("Exiting...");
-                    return;
+            // Regular menu processing
+            try {
+                int choice = Integer.parseInt(input);
+                
+                switch (choice) {
+                    case 1 -> add();
+                    case 2 -> modify();
+                    case 3 -> delete();
+                    case 4 -> {
+                        System.out.println("Exiting...");
+                        return;
+                    }
+                    default -> {
+                        System.out.println("Invalid choice!");
+                        pressEnterToContinue();
+                    }
                 }
-                default -> {
-                    System.out.println("Invalid choice!");
-                    pressEnterToContinue();
-                }
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number or code!");
+                pressEnterToContinue();
             }
         }
     }
 
     public static void main(String[] args) {
+        System.out.println("Starting User Management System...");
         Userclass userManager = new Userclass();
         userManager.showMenu();
     }
 }
 
-class UserDatabase {
+class UserDatabase implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final List<User> users;
     
     public UserDatabase() {
@@ -287,7 +373,8 @@ class UserDatabase {
     }
 }
 
-class User {
+class User implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final int id;
     private final String firstName;
     private final String lastName;
