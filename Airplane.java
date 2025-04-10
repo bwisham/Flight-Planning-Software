@@ -1,6 +1,10 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
-public class Airplane {
+public class Airplane implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String make;
     private String model;
     private String aircraftType;
@@ -10,6 +14,8 @@ public class Airplane {
     private int airspeed;
     private final Scanner scanner;
     private boolean dataSet = false;
+    private static final String DB_FILE = "airplanedb.dat";
+    private static AirplaneDatabase airplaneDB;
 
     public Airplane() {
         this.scanner = new Scanner(System.in);
@@ -20,6 +26,39 @@ public class Airplane {
         this.fuel = "";
         this.fuelBurn = 0.0;
         this.airspeed = 0;
+        Airplane.airplaneDB = loadDatabase();
+    }
+
+    private AirplaneDatabase loadDatabase() {
+        File dbFile = new File(DB_FILE);
+        System.out.println("Database file location: " + dbFile.getAbsolutePath());
+        
+        if (!dbFile.exists()) {
+            System.out.println("No database found. Creating new database file...");
+            return new AirplaneDatabase();
+        }
+        
+        if (dbFile.length() == 0) {
+            System.out.println("Empty database file detected. Creating new database...");
+            return new AirplaneDatabase();
+        }
+        
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DB_FILE))) {
+            return (AirplaneDatabase) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading database: " + e.getMessage());
+            System.out.println("Creating new database as recovery...");
+            return new AirplaneDatabase();
+        }
+    }
+
+    private void saveDatabase() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DB_FILE))) {
+            oos.writeObject(airplaneDB);
+            System.out.println("Database saved successfully");
+        } catch (IOException e) {
+            System.out.println("Error saving database: " + e.getMessage());
+        }
     }
 
     public void setMake() {
@@ -88,7 +127,7 @@ public class Airplane {
             return;
         }
         
-        System.out.println("\nAirplane Information:");
+        System.out.println("\nCurrent Airplane Information:");
         System.out.println("Make: " + make);
         System.out.println("Model: " + model);
         System.out.println("Aircraft Type: " + aircraftType);
@@ -104,7 +143,6 @@ public class Airplane {
     public void modify() {
         if (!dataSet) {
             System.out.println("\nERROR: Cannot modify - no airplane data has been set yet!");
-            System.out.println("Please use option 1 to set airplane information first.");
             System.out.print("Press enter to continue...");
             scanner.nextLine();
             return;
@@ -189,6 +227,44 @@ public class Airplane {
         return true;
     }
 
+    public void saveToDatabase() {
+        if (!dataSet) {
+            System.out.println("\nERROR: Cannot save - no airplane data has been set yet!");
+            System.out.print("Press enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+        
+        airplaneDB.addAirplane(this);
+        saveDatabase();
+        System.out.println("\nAirplane saved to database successfully!");
+        System.out.print("Press enter to continue...");
+        scanner.nextLine();
+    }
+
+    public void listAllAirplanes() {
+        if (airplaneDB.getAllAirplanes().isEmpty()) {
+            System.out.println("\nNo airplanes in database!");
+            System.out.print("Press enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+        
+        System.out.println("\nAll Airplanes in Database:");
+        System.out.printf("%-15s %-15s %-10s %-10s %-10s %-10s %-10s%n",
+                        "Make", "Model", "Type", "Fuel", "Size", "Burn", "Speed");
+        System.out.println("----------------------------------------------------------------");
+        
+        for (Airplane plane : airplaneDB.getAllAirplanes()) {
+            System.out.printf("%-15s %-15s %-10s %-10s %-10.1f %-10.1f %-10d%n",
+                            plane.make, plane.model, plane.aircraftType, plane.fuel,
+                            plane.fuelSize, plane.fuelBurn, plane.airspeed);
+        }
+        
+        System.out.print("\nPress enter to continue...");
+        scanner.nextLine();
+    }
+
     public static void main(String[] args) {
         Airplane airplane = new Airplane();
         Scanner menuScanner = new Scanner(System.in);
@@ -196,10 +272,12 @@ public class Airplane {
         while (true) {
             System.out.println("\nAirplane Management System");
             System.out.println("1. Set Airplane Information");
-            System.out.println("2. View Airplane Information");
-            System.out.println("3. Modify Airplane Information");
+            System.out.println("2. View Current Airplane");
+            System.out.println("3. Modify Current Airplane");
             System.out.println("4. Validate Information");
-            System.out.println("5. Exit");
+            System.out.println("5. Save to Database");
+            System.out.println("6. List All Airplanes");
+            System.out.println("7. Exit");
             System.out.print("Enter your choice: ");
             
             try {
@@ -219,15 +297,34 @@ public class Airplane {
                     case 2 -> airplane.print();
                     case 3 -> airplane.modify();
                     case 4 -> airplane.isValid();
-                    case 5 -> {
+                    case 5 -> airplane.saveToDatabase();
+                    case 6 -> airplane.listAllAirplanes();
+                    case 7 -> {
                         System.out.println("Exiting...");
                         return;
                     }
                     default -> System.out.println("Invalid choice!");
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input! Please enter a number between 1-5.");
+                System.out.println("Invalid input! Please enter a number between 1-7.");
             }
         }
+    }
+}
+
+class AirplaneDatabase implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final List<Airplane> airplanes;
+    
+    public AirplaneDatabase() {
+        this.airplanes = new ArrayList<>();
+    }
+    
+    public void addAirplane(Airplane airplane) {
+        airplanes.add(airplane);
+    }
+    
+    public List<Airplane> getAllAirplanes() {
+        return new ArrayList<>(airplanes);
     }
 }
