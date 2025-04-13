@@ -118,8 +118,7 @@ public class Airplane implements Serializable {
         if (!dataSet) {
             System.out.println("\nERROR: No airplane data has been set yet!");
             System.out.println("Please use option 1 to set airplane information first.");
-            System.out.print("Press enter to continue...");
-            scanner.nextLine();
+            waitForEnter();
             return;
         }
         
@@ -131,15 +130,13 @@ public class Airplane implements Serializable {
         System.out.println("Fuel Burn Rate: " + fuelBurn + " liters/hour");
         System.out.println("Airspeed: " + airspeed + " knots");
         
-        System.out.print("\nPress enter to continue...");
-        scanner.nextLine();
+        waitForEnter();
     }
 
     public void modify() {
         if (!dataSet) {
             System.out.println("\nERROR: Cannot modify - no airplane data has been set yet!");
-            System.out.print("Press enter to continue...");
-            scanner.nextLine();
+            waitForEnter();
             return;
         }
         
@@ -199,15 +196,13 @@ public class Airplane implements Serializable {
         }
         
         System.out.println("\nAirplane information updated successfully!");
-        System.out.print("Press enter to continue...");
-        scanner.nextLine();
+        waitForEnter();
     }
 
     public void saveToDatabase() {
         if (!dataSet) {
             System.out.println("\nERROR: Cannot save - no airplane data has been set yet!");
-            System.out.print("Press enter to continue...");
-            scanner.nextLine();
+            waitForEnter();
             return;
         }
         
@@ -223,8 +218,7 @@ public class Airplane implements Serializable {
         airplaneDB.addAirplane(airplaneToSave);
         saveDatabase();
         System.out.println("\nAirplane saved to database successfully!");
-        System.out.print("Press enter to continue...");
-        scanner.nextLine();
+        waitForEnter();
         
         resetFields();
     }
@@ -233,11 +227,7 @@ public class Airplane implements Serializable {
         List<Airplane> airplanes = airplaneDB.getAllAirplanes();
         if (airplanes.isEmpty()) {
             System.out.println("\nNo airplanes in database!");
-            System.out.print("Press enter to continue...");
-            try {
-                System.in.read();
-            } catch (IOException e) {
-            }
+            waitForEnter();
             return;
         }
         
@@ -260,10 +250,126 @@ public class Airplane implements Serializable {
         }
         
         System.out.println("==================================================================");
+        waitForEnter();
+    }
+
+    public static void modifyDatabaseAirplane() {
+        List<Airplane> airplanes = airplaneDB.getAllAirplanes();
+        if (airplanes.isEmpty()) {
+            System.out.println("\nNo airplanes in database to modify!");
+            waitForEnter();
+            return;
+        }
+        
+        listAllAirplanes();
+        
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("\nEnter the number of the airplane to modify: ");
+        try {
+            int choice = Integer.parseInt(scanner.nextLine());
+            if (choice < 1 || choice > airplanes.size()) {
+                System.out.println("Invalid selection!");
+                return;
+            }
+            
+            Airplane selected = airplanes.get(choice - 1);
+            Airplane modified = new Airplane();
+            modified.make = selected.make;
+            modified.model = selected.model;
+            modified.aircraftType = selected.aircraftType;
+            modified.fuelSize = selected.fuelSize;
+            modified.fuelBurn = selected.fuelBurn;
+            modified.airspeed = selected.airspeed;
+            modified.dataSet = true;
+            
+            System.out.println("\nModifying Airplane #" + choice);
+            modified.modify();
+            
+            airplanes.set(choice - 1, modified);
+            saveDatabase();
+            System.out.println("\nAirplane modified successfully!");
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input! Please enter a valid number.");
+        }
+    }
+
+    public static void removeFromDatabase() {
+        List<Airplane> airplanes = airplaneDB.getAllAirplanes();
+        if (airplanes.isEmpty()) {
+            System.out.println("\nNo airplanes in database to remove!");
+            waitForEnter();
+            return;
+        }
+
+        System.out.println("\nAll Airplanes in Database:");
+        System.out.println("==================================================================");
+        System.out.printf("%-3s %-15s %-15s %-10s %-12s %-12s %-10s%n",
+                       "#", "Make", "Model", "Type", "Fuel Size", "Fuel Burn", "Speed");
+        System.out.println("==================================================================");
+        
+        for (int i = 0; i < airplanes.size(); i++) {
+            Airplane plane = airplanes.get(i);
+            System.out.printf("%-3d %-15s %-15s %-10s %-12.1f %-12.1f %-10d%n",
+                           (i + 1),
+                           plane.make,
+                           plane.model,
+                           plane.aircraftType,
+                           plane.fuelSize,
+                           plane.fuelBurn,
+                           plane.airspeed);
+        }
+        System.out.println("==================================================================");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("\nEnter the number of the airplane to remove (0 to cancel): ");
+        try {
+            int choice = Integer.parseInt(scanner.nextLine());
+            
+            if (choice == 0) {
+                System.out.println("\nRemoval canceled.");
+                return;
+            }
+            
+            if (choice < 1 || choice > airplanes.size()) {
+                System.out.println("Invalid selection! Please enter a number between 1 and " + airplanes.size());
+                return;
+            }
+            
+            Airplane toRemove = airplanes.get(choice - 1);
+            
+            System.out.println("\nAirplane selected for removal:");
+            System.out.println("Make: " + toRemove.make);
+            System.out.println("Model: " + toRemove.model);
+            System.out.println("Type: " + toRemove.aircraftType);
+            System.out.println("Fuel Size: " + toRemove.fuelSize + " liters");
+            System.out.println("Fuel Burn: " + toRemove.fuelBurn + " liters/hour");
+            System.out.println("Airspeed: " + toRemove.airspeed + " knots");
+            
+            System.out.print("\nCONFIRM: Are you sure you want to remove this airplane? (y/n): ");
+            String confirm = scanner.nextLine().toLowerCase();
+            
+            if (confirm.equals("y")) {
+                airplanes.remove(choice - 1);
+                saveDatabase();
+                System.out.println("\nAirplane removed successfully!");
+            } else {
+                System.out.println("\nRemoval canceled.");
+            }
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input! Please enter a number.");
+        }
+        
+        waitForEnter();
+    }
+
+    private static void waitForEnter() {
         System.out.print("Press enter to continue...");
         try {
             System.in.read();
         } catch (IOException e) {
+            // Ignore
         }
     }
 
@@ -278,7 +384,9 @@ public class Airplane implements Serializable {
                 System.out.println("3. Modify Current Airplane");
                 System.out.println("4. Save to Database");
                 System.out.println("5. List All Airplanes");
-                System.out.println("6. Exit");
+                System.out.println("6. Modify Airplane in Database");
+                System.out.println("7. Remove Airplane from Database");
+                System.out.println("8. Exit");
                 System.out.print("Enter your choice: ");
                 
                 try {
@@ -298,14 +406,16 @@ public class Airplane implements Serializable {
                         case 3 -> airplane.modify();
                         case 4 -> airplane.saveToDatabase();
                         case 5 -> listAllAirplanes();
-                        case 6 -> {
+                        case 6 -> modifyDatabaseAirplane();
+                        case 7 -> removeFromDatabase();
+                        case 8 -> {
                             System.out.println("Exiting...");
                             return;
                         }
                         default -> System.out.println("Invalid choice!");
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("Invalid input! Please enter a number between 1-6.");
+                    System.out.println("Invalid input! Please enter a number between 1-8.");
                 }
             }
         }
