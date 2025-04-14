@@ -32,6 +32,10 @@ public class AirportManager {
                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 40
             );
 
+             // Check for duplicate airport name
+             if (portDbase.airportNameExists(name)) {
+                throw new IllegalArgumentException("An airport with this name already exists.");
+            }
             // Validate and get ICAO code (4 letters)
             String icao = showInputDialogWithValidation(
                 "Enter the ICAO Identifier of the airport (4 letters):",
@@ -167,9 +171,15 @@ public class AirportManager {
                 input -> true || (input.matches("[A-Za-z ]+") && input.length() <= 40)
             );
             if (!name.isEmpty()) {
+                 // Check if the new name is different from the current name
+                 if (!name.equalsIgnoreCase(airport.getName())) {
+                    // Check if another airport already has this name
+                    if (portDbase.airportNameExists(name)) {
+                        throw new IllegalArgumentException("An airport with this name already exists.");
+                    }
                 airport.setName(name);
             }
-
+        }
             // Update ICAO if provided
             String icao = showInputDialogWithValidation(
                 "Enter new ICAO (leave blank to keep current):",
@@ -571,7 +581,14 @@ class AirportDatabase {
         }
         return null;
     }
-
+    public boolean airportNameExists(String name) {
+        for (Airport airport : airports.values()) {
+            if (airport.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
     public void updateAirport(Airport airport) {
         airports.put(airport.getKey(), airport);
     }
