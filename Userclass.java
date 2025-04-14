@@ -2,11 +2,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
+import javax.swing.*;
 
 public class Userclass {
     private final UserDatabase userDbase;
-    private final Scanner scanner;
     private final Random random;
     private static final int MAX_NAME_LENGTH = 15;
     private static final int MAX_ADDRESS_LENGTH = 50;
@@ -14,7 +13,6 @@ public class Userclass {
     private static final String DB_FILE = "userdb.dat";
     
     public Userclass() {
-        this.scanner = new Scanner(System.in);
         this.random = new Random();
         System.out.println("Initializing database...");
         this.userDbase = loadDatabase();
@@ -66,54 +64,49 @@ public class Userclass {
         saveDatabase(this.userDbase);
     }
     
-    private void pressEnterToContinue() {
-        System.out.println("\nPress Enter to return to the main menu...");
-        scanner.nextLine();
-    }
-    
     public void add() {
         String fname;
         do {
-            System.out.print("Enter first name (max " + MAX_NAME_LENGTH + " chars): ");
-            fname = scanner.nextLine();
+            fname = JOptionPane.showInputDialog("Enter first name (max " + MAX_NAME_LENGTH + " chars):");
+            if (fname == null) return; // User cancelled
             if (fname.length() > MAX_NAME_LENGTH) {
-                System.out.println("First name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
+                JOptionPane.showMessageDialog(null, "First name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
             }
         } while (fname.length() > MAX_NAME_LENGTH);
 
         String lname;
         do {
-            System.out.print("Enter last name (max " + MAX_NAME_LENGTH + " chars): ");
-            lname = scanner.nextLine();
+            lname = JOptionPane.showInputDialog("Enter last name (max " + MAX_NAME_LENGTH + " chars):");
+            if (lname == null) return;
             if (lname.length() > MAX_NAME_LENGTH) {
-                System.out.println("Last name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
+                JOptionPane.showMessageDialog(null, "Last name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
             }
         } while (lname.length() > MAX_NAME_LENGTH);
 
         String pnumber;
         do {
-            System.out.print("Enter phone number (10 digits): ");
-            pnumber = scanner.nextLine();
+            pnumber = JOptionPane.showInputDialog("Enter phone number (10 digits):");
+            if (pnumber == null) return;
             if (!pnumber.matches("\\d{10}")) {
-                System.out.println("Invalid phone number! Must be exactly 10 digits.");
+                JOptionPane.showMessageDialog(null, "Invalid phone number! Must be exactly 10 digits.");
             }
         } while (!pnumber.matches("\\d{10}"));
 
         String haddress;
         do {
-            System.out.print("Enter home address (max " + MAX_ADDRESS_LENGTH + " chars): ");
-            haddress = scanner.nextLine();
+            haddress = JOptionPane.showInputDialog("Enter home address (max " + MAX_ADDRESS_LENGTH + " chars):");
+            if (haddress == null) return;
             if (haddress.length() > MAX_ADDRESS_LENGTH) {
-                System.out.println("Address too long! Max " + MAX_ADDRESS_LENGTH + " characters allowed.");
+                JOptionPane.showMessageDialog(null, "Address too long! Max " + MAX_ADDRESS_LENGTH + " characters allowed.");
             }
         } while (haddress.length() > MAX_ADDRESS_LENGTH);
 
         String eaddress;
         do {
-            System.out.print("Enter email address (max " + MAX_EMAIL_LENGTH + " chars): ");
-            eaddress = scanner.nextLine();
+            eaddress = JOptionPane.showInputDialog("Enter email address (max " + MAX_EMAIL_LENGTH + " chars):");
+            if (eaddress == null) return;
             if (eaddress.length() > MAX_EMAIL_LENGTH) {
-                System.out.println("Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
+                JOptionPane.showMessageDialog(null, "Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
             }
         } while (eaddress.length() > MAX_EMAIL_LENGTH);
 
@@ -125,10 +118,12 @@ public class Userclass {
     }
 
     private void btnSubmit(String fname, String lname, String pnumber, String haddress, String eaddress) {
-        System.out.println("Confirm submission? (Y/N)");
-        String confirmation = scanner.nextLine();
+        int confirmation = JOptionPane.showConfirmDialog(null, 
+            "Confirm submission?\nFirst Name: " + fname + "\nLast Name: " + lname + 
+            "\nPhone: " + pnumber + "\nAddress: " + haddress + "\nEmail: " + eaddress,
+            "Confirm", JOptionPane.YES_NO_OPTION);
         
-        if (confirmation.equalsIgnoreCase("Y")) {
+        if (confirmation == JOptionPane.YES_OPTION) {
             int userId;
             do {
                 userId = generateUserId();
@@ -137,73 +132,80 @@ public class Userclass {
             User user = new User(userId, fname, lname, pnumber, haddress, eaddress);
             userDbase.addUser(user);
             saveDatabase();
-            System.out.println("Submission successful! Your user ID is: " + userId);
+            JOptionPane.showMessageDialog(null, "Submission successful! Your user ID is: " + userId);
         } else {
-            System.out.println("Submission cancelled.");
+            JOptionPane.showMessageDialog(null, "Submission cancelled.");
         }
-        pressEnterToContinue();
     }
 
     public void modify() {
         if (userDbase.getAllUsers().isEmpty()) {
-            System.out.println("Error: No users in database!");
-            pressEnterToContinue();
+            JOptionPane.showMessageDialog(null, "Error: No users in database!");
             return;
         }
         
-        System.out.println("Enter user ID to modify:");
-        int id = scanner.nextInt();
-        scanner.nextLine();
+        String idInput = JOptionPane.showInputDialog("Enter user ID to modify:");
+        if (idInput == null) return;
+        
+        int id;
+        try {
+            id = Integer.parseInt(idInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid ID format!");
+            return;
+        }
         
         User user = userDbase.getUser(id);
         if (user != null) {
-            System.out.println("Current values:");
-            System.out.println(user);
+            StringBuilder currentValues = new StringBuilder("Current values:\n");
+            currentValues.append(user.toString());
             
-            System.out.println("Enter new values (leave blank to keep current):");
+            JOptionPane.showMessageDialog(null, currentValues.toString());
+            
+            JOptionPane.showMessageDialog(null, "Enter new values (leave blank to keep current):");
             
             String fname;
             do {
-                System.out.print("First name (" + user.getFirstName() + "): ");
-                fname = scanner.nextLine();
+                fname = JOptionPane.showInputDialog("First name (" + user.getFirstName() + "):");
+                if (fname == null) return;
                 if (!fname.isEmpty() && fname.length() > MAX_NAME_LENGTH) {
-                    System.out.println("First name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
+                    JOptionPane.showMessageDialog(null, "First name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
                 }
             } while (!fname.isEmpty() && fname.length() > MAX_NAME_LENGTH);
             
             String lname;
             do {
-                System.out.print("Last name (" + user.getLastName() + "): ");
-                lname = scanner.nextLine();
+                lname = JOptionPane.showInputDialog("Last name (" + user.getLastName() + "):");
+                if (lname == null) return;
                 if (!lname.isEmpty() && lname.length() > MAX_NAME_LENGTH) {
-                    System.out.println("Last name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
+                    JOptionPane.showMessageDialog(null, "Last name too long! Max " + MAX_NAME_LENGTH + " characters allowed.");
                 }
             } while (!lname.isEmpty() && lname.length() > MAX_NAME_LENGTH);
             
             String pnumber;
             do {
-                System.out.print("Phone (" + user.getPhoneNumber() + "): ");
-                pnumber = scanner.nextLine();
+                pnumber = JOptionPane.showInputDialog("Phone (" + user.getPhoneNumber() + "):");
+                if (pnumber == null) return;
                 if (!pnumber.isEmpty() && !pnumber.matches("\\d{10}")) {
-                    System.out.println("Invalid phone number! Must be exactly 10 digits.");
+                    JOptionPane.showMessageDialog(null, "Invalid phone number! Must be exactly 10 digits.");
                 }
             } while (!pnumber.isEmpty() && !pnumber.matches("\\d{10}"));
             
             String haddress;
             do {
-                System.out.print("Address (" + user.getHomeAddress() + "): ");
-                haddress = scanner.nextLine();
+                haddress = JOptionPane.showInputDialog("Address (" + user.getHomeAddress() + "):");
+                if (haddress == null) return;
                 if (!haddress.isEmpty() && haddress.length() > MAX_ADDRESS_LENGTH) {
-                    System.out.println("Address too long! Max " + MAX_ADDRESS_LENGTH + " characters allowed.");
+                    JOptionPane.showMessageDialog(null, "Address too long! Max " + MAX_ADDRESS_LENGTH + " characters allowed.");
                 }
             } while (!haddress.isEmpty() && haddress.length() > MAX_ADDRESS_LENGTH);
             
             String eaddress;
             do {
-                System.out.print("Email (" + user.getEmailAddress() + "): ");
-                eaddress = scanner.nextLine();
+                eaddress = JOptionPane.showInputDialog("Email (" + user.getEmailAddress() + "):");
+                if (eaddress == null) return;
                 if (!eaddress.isEmpty() && eaddress.length() > MAX_EMAIL_LENGTH) {
-                    System.out.println("Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
+                    JOptionPane.showMessageDialog(null, "Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
                 }
             } while (!eaddress.isEmpty() && eaddress.length() > MAX_EMAIL_LENGTH);
             
@@ -218,88 +220,90 @@ public class Userclass {
             
             userDbase.updateUser(id, updatedUser);
             saveDatabase();
-            System.out.println("User updated successfully!");
+            JOptionPane.showMessageDialog(null, "User updated successfully!");
         } else {
-            System.out.println("User not found!");
+            JOptionPane.showMessageDialog(null, "User not found!");
         }
-        pressEnterToContinue();
     }
 
     public void delete() {
         if (userDbase.getAllUsers().isEmpty()) {
-            System.out.println("Error: No users in database!");
-            pressEnterToContinue();
+            JOptionPane.showMessageDialog(null, "Error: No users in database!");
             return;
         }
         
-        System.out.println("Enter user ID to delete:");
-        int id = scanner.nextInt();
-        scanner.nextLine();
+        String idInput = JOptionPane.showInputDialog("Enter user ID to delete:");
+        if (idInput == null) return;
+        
+        int id;
+        try {
+            id = Integer.parseInt(idInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid ID format!");
+            return;
+        }
         
         User user = userDbase.getUser(id);
         if (user != null) {
-            System.out.println("About to delete:");
-            System.out.println(user);
+            StringBuilder userInfo = new StringBuilder("About to delete:\n");
+            userInfo.append(user.toString());
             
-            System.out.println("Confirm deletion? (Y/N)");
-            String confirmation = scanner.nextLine();
+            int confirmation = JOptionPane.showConfirmDialog(null, userInfo.toString() + "\nConfirm deletion?", 
+                "Confirm Deletion", JOptionPane.YES_NO_OPTION);
             
-            if (confirmation.equalsIgnoreCase("Y")) {
+            if (confirmation == JOptionPane.YES_OPTION) {
                 userDbase.deleteUser(id);
                 saveDatabase();
-                System.out.println("User deleted successfully!");
+                JOptionPane.showMessageDialog(null, "User deleted successfully!");
             } else {
-                System.out.println("Deletion cancelled.");
+                JOptionPane.showMessageDialog(null, "Deletion cancelled.");
             }
         } else {
-            System.out.println("User not found!");
+            JOptionPane.showMessageDialog(null, "User not found!");
         }
-        pressEnterToContinue();
     }
 
     private void listAllUsers() {
-        System.out.println("\n=== ALL USERS IN SYSTEM ===");
+        StringBuilder sb = new StringBuilder("=== ALL USERS IN SYSTEM ===\n");
         List<User> allUsers = userDbase.getAllUsers();
         
         if (allUsers.isEmpty()) {
-            System.out.println("No users in the system.");
-            return;
+            sb.append("No users in the system.");
+        } else {
+            sb.append(String.format("%-6s %-15s %-15s %-12s %-20s %-20s%n", 
+                                 "ID", "First Name", "Last Name", "Phone", "Email", "Address"));
+            sb.append("----------------------------------------------------------------------------\n");
+            
+            for (User user : allUsers) {
+                sb.append(String.format("%-6d %-15s %-15s %-12s %-20s %-20s%n",
+                                user.getId(),
+                                user.getFirstName(),
+                                user.getLastName(),
+                                user.getPhoneNumber(),
+                                user.getEmailAddress(),
+                                user.getHomeAddress()));
+            }
         }
         
-        System.out.printf("%-6s %-15s %-15s %-12s %-20s %-20s%n", 
-                         "ID", "First Name", "Last Name", "Phone", "Email", "Address");
-        System.out.println("----------------------------------------------------------------------------");
-        
-        for (User user : allUsers) {
-            System.out.printf("%-6d %-15s %-15s %-12s %-20s %-20s%n",
-                            user.getId(),
-                            user.getFirstName(),
-                            user.getLastName(),
-                            user.getPhoneNumber(),
-                            user.getEmailAddress(),
-                            user.getHomeAddress());
-        }
+        JOptionPane.showMessageDialog(null, new JTextArea(sb.toString()), "All Users", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void showMenu() {
         while (true) {
-            System.out.println("\nUser Management System");
-            System.out.println("1. Add User");
-            System.out.println("2. Modify User");
-            System.out.println("3. Delete User");
-            System.out.println("4. Exit");
-            System.out.print("Enter your choice (or secret code for admin options): ");
+            String input = JOptionPane.showInputDialog(null, 
+                "User Management System\n1. Add User\n2. Modify User\n3. Delete User\n4. Exit\n\nEnter your choice (or secret code for admin options):");
             
-            String input = scanner.nextLine();
+            if (input == null || input.equals("4")) {
+                JOptionPane.showMessageDialog(null, "Exiting...");
+                return;
+            }
             
-            // Check for secret code first
+            // Check for secret code
             if (input.equals("9860")) {
                 listAllUsers();
-                pressEnterToContinue();
                 continue;
             }
             
-            // Regular menu processing
             try {
                 int choice = Integer.parseInt(input);
                 
@@ -308,17 +312,13 @@ public class Userclass {
                     case 2 -> modify();
                     case 3 -> delete();
                     case 4 -> {
-                        System.out.println("Exiting...");
+                        JOptionPane.showMessageDialog(null, "Exiting...");
                         return;
                     }
-                    default -> {
-                        System.out.println("Invalid choice!");
-                        pressEnterToContinue();
-                    }
+                    default -> JOptionPane.showMessageDialog(null, "Invalid choice!");
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number or code!");
-                pressEnterToContinue();
+                JOptionPane.showMessageDialog(null, "Please enter a valid number or code!");
             }
         }
     }
