@@ -6,7 +6,7 @@ public class FlightPlanner {
     public FlightPlanner() {
         this.scanner = new Scanner(System.in);
     }
-
+// might need to add methods to aiport/airplane classes
     public void createFlightPlan(AirportDatabase airportDB, AirplaneDatabase airplaneDB) {
         if (airportDB.getAllAirports().isEmpty() || airplaneDB.getAllAirplanes().isEmpty()) {
             System.out.println("Error: Airports or Airplanes database is empty!");
