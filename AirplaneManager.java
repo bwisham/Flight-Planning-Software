@@ -1,9 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
- //package com.mycompany.airplanemanager;
-
 /**
  *
  * @author Andrew
@@ -636,4 +630,5 @@
      public int getNextKey() {
          return nextKey++;
      }
- } 
+ }
+ 
