@@ -1,13 +1,41 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "jdk",
-            "request": "launch",
-            "name": "Launch Java App"
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "AirplaneManager",
+      "request": "launch",
+      "mainClass": "com.mycompany.airplanemanager.AirplaneManager",
+      "projectName": "Flight-Planning-Software_325800e7"
+    },
+    {
+      "type": "java",
+      "name": "AirplaneManager",
+      "request": "launch",
+      "mainClass": "AirplaneManager",
+      "projectName": "Flight-Planning-Software_325800e7"
+    },
+    {
+      "type": "java",
+      "name": "AirportManager",
+      "request": "launch",
+      "mainClass": "AirportManager",
+      "projectName": "Flight-Planning-Software_325800e7"
+    },
+    {
+      "type": "java",
+      "name": "AirportManager1",
+      "request": "launch",
+      "mainClass": "AirportManager1",
+      "projectName": "Flight-Planning-Software_325800e7"
+    },
+    {
+      "type": "jdk",
+      "request": "launch",
+      "name": "Launch Java App"
+    }
+  ]
 }
