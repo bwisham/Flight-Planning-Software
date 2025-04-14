@@ -482,7 +482,7 @@ class Airport implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Airport [Key: %d, Name: %s, ICAO: %s, Latitude: %.4f, Longitude: %.4f, Fuel Type: %d, Radio Type: %s, Radio Frequency: %.2f]",
+        return String.format("Airport [Key: %d, Name: %s, ICAO: %s, Latitude: %.4f, Longitude: %.4f, Fuel Type: %d, Radio Type: %s, Radio Frequency: %.4f]",
                 key, name, icao, latitude, longitude, fuelType, radioType, radioFrequency);
     }
 }
