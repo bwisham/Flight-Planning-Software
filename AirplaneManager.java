@@ -62,6 +62,7 @@ public class AirplaneManager {
      * Adds a new airplane to the database after validating all input fields.
      * Collects airplane details through dialog boxes.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void addAirplane() {
         try {
             // Validate and get airplane make
@@ -137,6 +138,7 @@ public class AirplaneManager {
      * Searches for an airplane by make, model, or type.
      * Displays search results in a dialog box.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void searchAirplane() {
         try {
             String[] options = {"By Make", "By Model", "By Type"};
@@ -180,6 +182,7 @@ public class AirplaneManager {
      * Modifies an existing airplane's details.
      * Allows partial updates by keeping current values if fields are left blank.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void modifyAirplane() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -287,6 +290,7 @@ public class AirplaneManager {
     /**
      * Deletes an airplane from the database after confirmation.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void deleteAirplane() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -329,6 +333,7 @@ public class AirplaneManager {
     /**
      * Displays a scrollable list of all airplanes in the database.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void printAirplaneList() {
         try {
             Collection<Airplane> airplanes = planeDbase.getAllAirplanes();
@@ -510,6 +515,7 @@ public class AirplaneManager {
     /**
      * Displays the main menu and handles user choices.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public void showMenu() {
         String[] options = {
             "Add Airplane",
@@ -631,21 +637,24 @@ class AirplaneDatabase {
     public Airplane searchAirplane(String searchTerm, int searchType) {
         for (Airplane airplane : airplanes.values()) {
             switch (searchType) {
-                case 0: // By Make
+                case 0 -> {
+                    // By Make
                     if (airplane.getMake().equalsIgnoreCase(searchTerm)) {
                         return airplane;
                     }
-                    break;
-                case 1: // By Model
+                }
+                case 1 -> {
+                    // By Model
                     if (airplane.getModel().equalsIgnoreCase(searchTerm)) {
                         return airplane;
                     }
-                    break;
-                case 2: // By Type
+                }
+                case 2 -> {
+                    // By Type
                     if (airplane.getAircraftType().equalsIgnoreCase(searchTerm)) {
                         return airplane;
                     }
-                    break;
+                }
             }
         }
         return null;

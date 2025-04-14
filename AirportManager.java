@@ -9,6 +9,7 @@ public class AirportManager {
         this.portDbase = new AirportDatabase();
     }
 
+    @SuppressWarnings("UseSpecificCatch")
     public void addAirport() {
         try {
             String name = showInputDialogWithValidation(
@@ -27,6 +28,7 @@ public class AirportManager {
                 input -> input != null && input.matches("[A-Za-z]{4}")
             ).toUpperCase();
 
+            @SuppressWarnings("UnnecessaryUnboxing")
             double latitude = showNumericInputDialogWithValidation(
                 "Enter the latitude of the airport (-90 to 90):",
                 "Invalid latitude. Must be between -90 and 90.",
@@ -34,6 +36,7 @@ public class AirportManager {
                 false
             ).doubleValue();
 
+            @SuppressWarnings("UnnecessaryUnboxing")
             double longitude = showNumericInputDialogWithValidation(
                 "Enter the longitude of the airport (-180 to 180):",
                 "Invalid longitude. Must be between -180 and 180.",
@@ -53,6 +56,7 @@ public class AirportManager {
                 input -> input != null && !input.trim().isEmpty() && input.length() <= 20
             );
 
+            @SuppressWarnings("UnnecessaryUnboxing")
             double radioFrequency = showNumericInputDialogWithValidation(
                 "Enter the radio frequency (e.g., 118.00 - 136.975 for VHF):",
                 "Invalid radio frequency. Must be positive.",
@@ -77,6 +81,7 @@ public class AirportManager {
         }
     }
 
+    @SuppressWarnings("UseSpecificCatch")
     public void searchAirport() {
         try {
             String[] options = {"By Name", "By ICAO"};
@@ -119,6 +124,7 @@ public class AirportManager {
         }
     }
 
+    @SuppressWarnings({"UnnecessaryUnboxing", "UseSpecificCatch"})
     public void modifyAirport() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -220,6 +226,7 @@ public class AirportManager {
         }
     }
 
+    @SuppressWarnings("UseSpecificCatch")
     public void deleteAirport() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -258,6 +265,7 @@ public class AirportManager {
         }
     }
 
+    @SuppressWarnings("UseSpecificCatch")
     public void printAirportList() {
         try {
             Collection<Airport> airports = portDbase.getAllAirports();
@@ -391,6 +399,7 @@ public class AirportManager {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
+    @SuppressWarnings("UseSpecificCatch")
     public void showMenu() {
         String[] options = {
             "Add Airport",
