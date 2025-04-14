@@ -1,49 +1,32 @@
-/**
- *
- * @author Andrew
- */
-/*
- * Airport Management System
- * This class manages airport operations including adding, searching, modifying,
- * deleting airports, and displaying the airport list.
- */
-
-import java.util.Collection;
+import java.io.*;
+import java.util.*;
 import javax.swing.*;
 
 public class AirportManager {
-    private final AirportDatabase portDbase; // Database instance for airports
+    private final AirportDatabase portDbase;
 
-    // Constructor initializes the airport database
     public AirportManager() {
         this.portDbase = new AirportDatabase();
     }
 
-    /**
-     * Adds a new airport to the database after validating all input fields.
-     * Collects airport details through dialog boxes.
-     */
     public void addAirport() {
         try {
-            // Validate and get airport name
             String name = showInputDialogWithValidation(
                 "Enter the name of the airport:",
                 "Airport name cannot be empty and must be less than 40 characters. It also must be letters only.",
                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 40
             );
 
-             // Check for duplicate airport name
-             if (portDbase.airportNameExists(name)) {
+            if (portDbase.airportNameExists(name)) {
                 throw new IllegalArgumentException("An airport with this name already exists.");
             }
-            // Validate and get ICAO code (4 letters)
+
             String icao = showInputDialogWithValidation(
                 "Enter the ICAO Identifier of the airport (4 letters):",
                 "ICAO must be exactly 4 alphabetic characters.",
                 input -> input != null && input.matches("[A-Za-z]{4}")
             ).toUpperCase();
 
-            // Validate and get latitude (-90 to 90)
             double latitude = showNumericInputDialogWithValidation(
                 "Enter the latitude of the airport (-90 to 90):",
                 "Invalid latitude. Must be between -90 and 90.",
@@ -51,7 +34,6 @@ public class AirportManager {
                 false
             ).doubleValue();
 
-            // Validate and get longitude (-180 to 180)
             double longitude = showNumericInputDialogWithValidation(
                 "Enter the longitude of the airport (-180 to 180):",
                 "Invalid longitude. Must be between -180 and 180.",
@@ -59,32 +41,28 @@ public class AirportManager {
                 false
             ).doubleValue();
 
-            // Validate and get fuel type (1-3)
             int fuelType = showNumericInputDialogWithValidation(
                 "Enter the fuel types the airport supports (1-3). 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
                 "Invalid fuel type. Must be between 1 and 3.",
                 1, 3
             );
 
-             // Validate and get radio type
-        String radioType = showInputDialogWithValidation(
+            String radioType = showInputDialogWithValidation(
                 "Enter the radio type (e.g., VHF, UHF, HF):",
                 "Radio type cannot be empty and must be less than 20 characters.",
                 input -> input != null && !input.trim().isEmpty() && input.length() <= 20
-        );
+            );
 
-        // Validate and get radio frequency
-        double radioFrequency = showNumericInputDialogWithValidation(
+            double radioFrequency = showNumericInputDialogWithValidation(
                 "Enter the radio frequency (e.g., 118.00 - 136.975 for VHF):",
                 "Invalid radio frequency. Must be positive.",
                 0.1, Double.MAX_VALUE,
                 false
-        ).doubleValue();
-            // Create new airport object
+            ).doubleValue();
+
             int key = portDbase.getNextKey();
             Airport airport = new Airport(name, icao, latitude, longitude, fuelType, key, radioType, radioFrequency);
 
-            // Validate airport data before adding to database
             if (!validateAirportData(airport)) {
                 throw new IllegalArgumentException("Airport data validation failed");
             }
@@ -99,10 +77,6 @@ public class AirportManager {
         }
     }
 
-    /**
-     * Searches for an airport by name or ICAO code.
-     * Displays search results in a dialog box.
-     */
     public void searchAirport() {
         try {
             String[] options = {"By Name", "By ICAO"};
@@ -145,10 +119,6 @@ public class AirportManager {
         }
     }
 
-    /**
-     * Modifies an existing airport's details.
-     * Allows partial updates by keeping current values if fields are left blank.
-     */
     public void modifyAirport() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -164,23 +134,20 @@ public class AirportManager {
 
             JOptionPane.showMessageDialog(null, "Current airport details:\n" + airport);
 
-            // Update name if provided
             String name = showInputDialogWithValidation(
                 "Enter new name (leave blank to keep current):",
                 "Airport name cannot be empty and must be less than 40 characters. It also must be letters only.",
                 input -> true || (input.matches("[A-Za-z ]+") && input.length() <= 40)
             );
             if (!name.isEmpty()) {
-                 // Check if the new name is different from the current name
-                 if (!name.equalsIgnoreCase(airport.getName())) {
-                    // Check if another airport already has this name
+                if (!name.equalsIgnoreCase(airport.getName())) {
                     if (portDbase.airportNameExists(name)) {
                         throw new IllegalArgumentException("An airport with this name already exists.");
                     }
-                airport.setName(name);
+                    airport.setName(name);
+                }
             }
-        }
-            // Update ICAO if provided
+
             String icao = showInputDialogWithValidation(
                 "Enter new ICAO (leave blank to keep current):",
                 "ICAO must be exactly 4 alphabetic characters",
@@ -190,7 +157,6 @@ public class AirportManager {
                 airport.setIcao(icao.toUpperCase());
             }
 
-            // Update latitude if provided
             Double latitude = showNumericInputDialogWithValidation(
                 "Enter new latitude (or 0 to keep current):",
                 "Invalid latitude. Must be between -90 and 90.",
@@ -201,7 +167,6 @@ public class AirportManager {
                 airport.setLatitude(latitude);
             }
 
-            // Update longitude if provided
             Double longitude = showNumericInputDialogWithValidation(
                 "Enter new longitude (or 0 to keep current):",
                 "Invalid longitude. Must be between -180 and 180.",
@@ -212,7 +177,6 @@ public class AirportManager {
                 airport.setLongitude(longitude);
             }
 
-            // Update fuel type if provided
             Integer fuelType = showIntegerInputDialogWithValidation(
                 "Enter new fuel type (or 0 to keep current, 1-3) 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
                 "Invalid fuel type. Must be between 1 and 3.",
@@ -222,26 +186,26 @@ public class AirportManager {
             if (fuelType != null && fuelType != 0) {
                 airport.setFuelType(fuelType.intValue());
             }
-// Update radio type if provided
-        String radioType = showInputDialogWithValidation(
+
+            String radioType = showInputDialogWithValidation(
                 "Enter new radio type (leave blank to keep current):",
                 "Radio type must be less than 20 characters.",
                 input -> input.isEmpty() || input.length() <= 20
-        );
-        if (!radioType.isEmpty()) {
-            airport.setRadioType(radioType);
-        }
+            );
+            if (!radioType.isEmpty()) {
+                airport.setRadioType(radioType);
+            }
 
-        // Update radio frequency if provided
-        Double radioFrequency = showNumericInputDialogWithValidation(
+            Double radioFrequency = showNumericInputDialogWithValidation(
                 "Enter new radio frequency (or 0 to keep current, 118.00-136.975):",
                 "Invalid radio frequency. Must be positive.",
                 0.1, Double.MAX_VALUE,
                 true
-        ).doubleValue();
-        if (radioFrequency != null && radioFrequency != 0) {
-            airport.setRadioFrequency(radioFrequency);
-        }
+            ).doubleValue();
+            if (radioFrequency != null && radioFrequency != 0) {
+                airport.setRadioFrequency(radioFrequency);
+            }
+
             if (!validateAirportData(airport)) {
                 throw new IllegalArgumentException("Modified airport data validation failed");
             }
@@ -256,9 +220,6 @@ public class AirportManager {
         }
     }
 
-    /**
-     * Deletes an airport from the database after confirmation.
-     */
     public void deleteAirport() {
         try {
             Integer key = showNumericInputDialogWithValidation(
@@ -297,9 +258,6 @@ public class AirportManager {
         }
     }
 
-    /**
-     * Displays a scrollable list of all airports in the database.
-     */
     public void printAirportList() {
         try {
             Collection<Airport> airports = portDbase.getAllAirports();
@@ -324,11 +282,6 @@ public class AirportManager {
         }
     }
 
-    /**
-     * Validates airport data against business rules.
-     * @param airport The airport object to validate
-     * @return true if valid, false otherwise
-     */
     private boolean validateAirportData(Airport airport) {
         try {
             if (airport.getName() == null || airport.getName().trim().isEmpty()) {
@@ -359,7 +312,6 @@ public class AirportManager {
         }
     }
 
-    // Helper methods for input validation
     private String showInputDialogWithValidation(String message, String errorMessage, java.util.function.Predicate<String> validator) {
         while (true) {
             String input = JOptionPane.showInputDialog(message);
@@ -374,12 +326,16 @@ public class AirportManager {
             }
         }
     }
-    private double showNumericInputDialogWithValidation(String message, String errorMessage, double min, double max) {
+
+    private Double showNumericInputDialogWithValidation(String message, String errorMessage, double min, double max, boolean allowEmpty) {
         while (true) {
             try {
                 String input = JOptionPane.showInputDialog(message);
                 if (input == null) {
                     throw new IllegalArgumentException("Operation cancelled");
+                }
+                if (allowEmpty && input.trim().isEmpty()) {
+                    return null;
                 }
                 double value = Double.parseDouble(input);
                 if (value >= min && value <= max) {
@@ -431,34 +387,10 @@ public class AirportManager {
         }
     }
 
-    private Double showNumericInputDialogWithValidation(String message, String errorMessage, double min, double max, boolean allowEmpty) {
-        while (true) {
-            try {
-                String input = JOptionPane.showInputDialog(message);
-                if (input == null) {
-                    throw new IllegalArgumentException("Operation cancelled");
-                }
-                if (allowEmpty && input.trim().isEmpty()) {
-                    return null;
-                }
-                double value = Double.parseDouble(input);
-                if (value >= min && value <= max) {
-                    return value;
-                }
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid number");
-            }
-        }
-    }
-
     private void showErrorDialog(String title, String message) {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    /**
-     * Displays the main menu and handles user choices.
-     */
     public void showMenu() {
         String[] options = {
             "Add Airport",
@@ -509,20 +441,19 @@ public class AirportManager {
     }
 }
 
-/**
- * Represents an airport with all its properties.
- */
-class Airport {
+class Airport implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String name;
     private String icao;
     private double latitude;
     private double longitude;
     private int fuelType;
-    private int key;
+    private final int key;
     private String radioType;
     private double radioFrequency;
 
-    public Airport(String name, String icao, double latitude, double longitude, int fuelType, int key, String radioType, double radioFrequency) {
+    public Airport(String name, String icao, double latitude, double longitude, 
+                  int fuelType, int key, String radioType, double radioFrequency) {
         this.name = name;
         this.icao = icao;
         this.latitude = latitude;
@@ -533,7 +464,6 @@ class Airport {
         this.radioFrequency = radioFrequency;
     }
 
-    // Getters and setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getIcao() { return icao; }
@@ -557,15 +487,40 @@ class Airport {
     }
 }
 
-/**
- * In-memory database for storing and managing airport data.
- */
 class AirportDatabase {
-    private java.util.Map<Integer, Airport> airports = new java.util.HashMap<>();
+    private Map<Integer, Airport> airports = new HashMap<>();
     private int nextKey = 1;
+    private static final String DATA_FILE = "airports.dat";
+
+    public AirportDatabase() {
+        loadAirports();
+    }
+
+    private void loadAirports() {
+        File file = new File(DATA_FILE);
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                airports = (HashMap<Integer, Airport>) ois.readObject();
+                nextKey = airports.keySet().stream().max(Integer::compare).orElse(0) + 1;
+            } catch (IOException | ClassNotFoundException e) {
+                JOptionPane.showMessageDialog(null, "Error loading airport data: " + e.getMessage(), 
+                                           "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void saveAirports() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+            oos.writeObject(airports);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error saving airport data: " + e.getMessage(), 
+                                       "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     public void addAirport(Airport airport) {
         airports.put(airport.getKey(), airport);
+        saveAirports();
     }
 
     public Airport getAirport(int key) {
@@ -573,31 +528,30 @@ class AirportDatabase {
     }
 
     public Airport searchAirport(String searchTerm) {
-        for (Airport airport : airports.values()) {
-            if (airport.getName().equalsIgnoreCase(searchTerm) ||
-                airport.getIcao().equalsIgnoreCase(searchTerm)) {
-                return airport;
-            }
-        }
-        return null;
+        return airports.values().stream()
+            .filter(a -> a.getName().equalsIgnoreCase(searchTerm) || 
+                        a.getIcao().equalsIgnoreCase(searchTerm))
+            .findFirst()
+            .orElse(null);
     }
+
     public boolean airportNameExists(String name) {
-        for (Airport airport : airports.values()) {
-            if (airport.getName().equalsIgnoreCase(name)) {
-                return true;
-            }
-        }
-        return false;
+        return airports.values().stream()
+            .anyMatch(a -> a.getName().equalsIgnoreCase(name));
     }
+
     public void updateAirport(Airport airport) {
         airports.put(airport.getKey(), airport);
+        saveAirports();
     }
 
     public boolean deleteAirport(int key) {
-        return airports.remove(key) != null;
+        boolean removed = airports.remove(key) != null;
+        if (removed) saveAirports();
+        return removed;
     }
 
-    public java.util.Collection<Airport> getAllAirports() {
+    public Collection<Airport> getAllAirports() {
         return airports.values();
     }
 
