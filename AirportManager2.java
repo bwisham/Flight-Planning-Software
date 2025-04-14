@@ -4,10 +4,10 @@ import javax.swing.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-public class AirportManager {
+public class AirportManager2 {
     private final AirportDatabase portDbase;
 
-    public AirportManager() {
+    public AirportManager2() {
         this.portDbase = new AirportDatabase(); // Active database from AirportsDB.xlsx
     }
 
@@ -514,7 +514,7 @@ class AirportDatabase {
     
     private void loadAirportsFromExcel(String excelPath) {
         try (FileInputStream fis = new FileInputStream(new File(excelPath));
-             Workbook workbook = new XSSFWorkbook(fis)) {
+            Workbook workbook = new XSSFWorkbook(fis)) {
             Sheet sheet = workbook.getSheetAt(0);
             // Assume first row is header
             for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
