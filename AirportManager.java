@@ -48,6 +48,10 @@ public class AirportManager {
                 false
             ).doubleValue();
 
+            if (portDbase.coordinatesExist(latitude, longitude)) {
+                throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+            }
+
             int fuelType = showNumericInputDialogWithValidation(
                 "Enter the fuel types the airport supports (1-3). 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
                 "Invalid fuel type. Must be between 1 and 3.",
@@ -180,6 +184,10 @@ public class AirportManager {
                 true
             );
             if (latitude != null && latitude != 0) {
+                if (portDbase.coordinatesExist(latitude, airport.getLongitude()) && 
+                    !(airport.getLatitude() == latitude && airport.getLongitude() == airport.getLongitude())) {
+                    throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+                }
                 airport.setLatitude(latitude);
             }
 
@@ -190,6 +198,10 @@ public class AirportManager {
                 true
             );
             if (longitude != null && longitude != 0) {
+                if (portDbase.coordinatesExist(airport.getLatitude(), longitude) && 
+                    !(airport.getLatitude() == airport.getLatitude() && airport.getLongitude() == longitude)) {
+                    throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+                }
                 airport.setLongitude(longitude);
             }
 
@@ -384,7 +396,7 @@ public class AirportManager {
         }
     }
 
-    private int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
+    public int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
         while (true) {
             try {
                 String input = JOptionPane.showInputDialog(message);
@@ -402,7 +414,7 @@ public class AirportManager {
         }
     }
 
-    private void showErrorDialog(String title, String message) {
+    public void showErrorDialog(String title, String message) {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
@@ -458,15 +470,15 @@ public class AirportManager {
 }
 
 class Airport implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private String name;
-    private String icao;
-    private double latitude;
-    private double longitude;
-    private int fuelType;
-    private final int key;
-    private String radioType;
-    private double radioFrequency;
+    public static final long serialVersionUID = 1L;
+    public String name;
+    public String icao;
+    public double latitude;
+    public double longitude;
+    public int fuelType;
+    public final int key;
+    public String radioType;
+    public double radioFrequency;
 
     public Airport(String name, String icao, double latitude, double longitude, 
                   int fuelType, int key, String radioType, double radioFrequency) {
@@ -512,7 +524,7 @@ class AirportDatabase {
         loadAirports();
     }
 
-    private void loadAirports() {
+    public void loadAirports() {
         File file = new File(DATA_FILE);
         if (file.exists()) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
@@ -525,7 +537,7 @@ class AirportDatabase {
         }
     }
 
-    private void saveAirports() {
+    public void saveAirports() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
             oos.writeObject(airports);
         } catch (IOException e) {
@@ -559,6 +571,11 @@ class AirportDatabase {
     public boolean icaoExists(String icao) {
         return airports.values().stream()
             .anyMatch(a -> a.getIcao().equalsIgnoreCase(icao));
+    }
+
+    public boolean coordinatesExist(double latitude, double longitude) {
+        return airports.values().stream()
+            .anyMatch(a -> a.getLatitude() == latitude && a.getLongitude() == longitude);
     }
 
     public void updateAirport(Airport airport) {

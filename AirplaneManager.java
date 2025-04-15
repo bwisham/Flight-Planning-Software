@@ -25,12 +25,16 @@
          this.planeDbase = new AirplaneDatabase();
          loadAirplanes(); // Load saved data when starting
      }
+
+    public AirplaneManager(AirplaneDatabase planeDbase) {
+        this.planeDbase = planeDbase;
+    }
  
      /**
       * Loads airplanes from file
       */
      @SuppressWarnings("unchecked")
-     private void loadAirplanes() {
+     public void loadAirplanes() {
          try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
              ArrayList<Airplane> loadedAirplanes = (ArrayList<Airplane>) ois.readObject();
              for (Airplane airplane : loadedAirplanes) {
@@ -51,7 +55,7 @@
      /**
       * Saves airplanes to file
       */
-     private void saveAirplanes() {
+     public void saveAirplanes() {
          try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
              oos.writeObject(new ArrayList<>(planeDbase.getAllAirplanes()));
          } catch (IOException e) {
