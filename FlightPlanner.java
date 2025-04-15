@@ -13,7 +13,7 @@ public class FlightPlanner {
         }
 
         System.out.println("\nAvailable Airports:");
-        for (Airport airport : AirportsDB.getAllAirports()) {
+        for (Airport airport : airportDB.getAllAirports()) {
             System.out.println("Key: " + airport.getKey() + " | Name: " + airport.getName() + " | ICAO: " + airport.getIcao());
         }
 
