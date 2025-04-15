@@ -515,7 +515,7 @@ class Airport implements Serializable {
     }
 }
 
-class AirportDatabase {
+class AirportDatabase extends HashMap<String, Airport> {
     public Map<Integer, Airport> airports = new HashMap<>();
     public int nextKey = 1;
     public static String DATA_FILE = "airports.dat";

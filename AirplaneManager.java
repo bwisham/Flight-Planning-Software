@@ -642,7 +642,7 @@
  /**
   * In-memory database for storing and managing airplane data.
   */
- class AirplaneDatabase {
+ class AirplaneDatabase extends HashMap<String, Airplane> {
      private Map<Integer, Airplane> airplanes = new HashMap<>();
      private int nextKey = 1;
  
