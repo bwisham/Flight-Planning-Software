@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import java.util.*;
 
 public class FlightPlanner {
@@ -11,6 +12,13 @@ public class FlightPlanner {
         List<Airplane> getAllAirplanes();
         Airplane getAirplane(int key);
     } */
+=======
+import java.util.Scanner;
+
+public class FlightPlanner {
+    private final Scanner scanner;
+
+>>>>>>> 5ae4c7179169afbf730c158719f1cb6267d25625
     public FlightPlanner() {
         this.scanner = new Scanner(System.in);
     }
@@ -78,6 +86,7 @@ public class FlightPlanner {
         double longDifference = a2.getLongitude() - a1.getLongitude();
         return Math.sqrt(Math.pow(latDifference, 2) + Math.pow(longDifference, 2)) * 60;
     }
+<<<<<<< HEAD
 /*    class Airport implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
@@ -350,3 +359,6 @@ public class FlightPlanner {
         public double getFuelSize() { return fuelSize; } 
     } */
 }
+=======
+}
+>>>>>>> 5ae4c7179169afbf730c158719f1cb6267d25625
