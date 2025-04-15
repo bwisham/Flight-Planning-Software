@@ -4,17 +4,17 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Airplane implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private String make;
-    private String model;
-    private String aircraftType;
-    private double fuelSize;
-    private double fuelBurn;
-    private int airspeed;
-    private transient Scanner scanner;
-    private boolean dataSet = false;
-    private static final String DB_FILE = "Airplanedb1.dat";
-    private static final AirplaneDatabase airplaneDB = loadDatabase();
+    public static final long serialVersionUID = 1L;
+    public String make;
+    public String model;
+    public String aircraftType;
+    public double fuelSize;
+    public double fuelBurn;
+    public int airspeed;
+    public transient Scanner scanner;
+    public boolean dataSet = false;
+    public static  String DB_FILE = "Airplanedb1.dat";
+    public static  AirplaneDatabase airplaneDB = loadDatabase();
 
     public Airplane() {
         this.scanner = new Scanner(System.in);
