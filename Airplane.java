@@ -21,7 +21,7 @@ public class Airplane implements Serializable {
         resetFields();
     }
 
-    private void resetFields() {
+    public void resetFields() {
         this.make = "";
         this.model = "";
         this.aircraftType = "";
@@ -31,12 +31,12 @@ public class Airplane implements Serializable {
         this.dataSet = false;
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    public void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         this.scanner = new Scanner(System.in);
     }
 
-    private static AirplaneDatabase loadDatabase() {
+    public static AirplaneDatabase loadDatabase() {
         File dbFile = new File(DB_FILE);
         System.out.println("Database file location: " + dbFile.getAbsolutePath());
         
@@ -53,7 +53,7 @@ public class Airplane implements Serializable {
         }
     }
 
-    private static void saveDatabase() {
+    public static void saveDatabase() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DB_FILE))) {
             oos.writeObject(airplaneDB);
             System.out.println("Database saved successfully to " + DB_FILE);
@@ -364,7 +364,7 @@ public class Airplane implements Serializable {
         waitForEnter();
     }
 
-    private static void waitForEnter() {
+    public static void waitForEnter() {
         System.out.print("Press enter to continue...");
         try {
             System.in.read();
@@ -423,8 +423,8 @@ public class Airplane implements Serializable {
 }
 
 class AirplaneDatabase implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private final List<Airplane> airplanes;
+    public static long serialVersionUID = 1L;
+    public List<Airplane> airplanes;
     
     public AirplaneDatabase() {
         this.airplanes = new ArrayList<>();
