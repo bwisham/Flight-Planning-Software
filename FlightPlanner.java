@@ -27,7 +27,7 @@ public class FlightPlanner {
 
         System.out.print("Enter destination airport key: ");
         int destinationKey = Integer.parseInt(scanner.nextLine());
-        Airport destinationAirport = airportDB.getAirport(destinationKey);
+        Airport destinationAirport = AirportsDB.getAirport(destinationKey);
         if (destinationAirport == null) {
             System.out.println("Invalid destination airport key!");
             return;
