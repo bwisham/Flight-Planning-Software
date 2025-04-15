@@ -1,28 +1,32 @@
+import javax.swing.*;
 import java.io.*;
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Load databases from files
-        Map<Integer, Airport> airports = loadAirportsFromFile("airports.dat");
-        Map<Integer, Airplane> airplanes = loadAirplanesFromFile("airplanes.dat");
-       
-        if (airports == null || airplanes == null || airports.isEmpty() || airplanes.isEmpty()) {
-            System.out.println("Error: Failed to load databases or databases are empty!");
-            System.out.println("Airports loaded: " + (airports != null ? airports.size() : 0));
-            System.out.println("Airplanes loaded: " + (airplanes != null ? airplanes.size() : 0));
-            return;
-        }
-       
-        FlightPlanner flightPlanner = new FlightPlanner();
-        flightPlanner.createFlightPlan(airports, airplanes);
+        SwingUtilities.invokeLater(() -> {
+            // Load databases from files
+            Map<Integer, Airport> airports = loadAirportsFromFile("airports.dat");
+            Map<Integer, Airplane> airplanes = loadAirplanesFromFile("airplanes.dat");
+           
+            if (airports == null || airplanes == null || airports.isEmpty() || airplanes.isEmpty()) {
+                String message = "Error: Failed to load databases or databases are empty!\n" +
+                               "Airports loaded: " + (airports != null ? airports.size() : 0) + "\n" +
+                               "Airplanes loaded: " + (airplanes != null ? airplanes.size() : 0);
+                JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+           
+            new FlightPlannerGUI().createFlightPlan(airports, airplanes);
+        });
     }
 
     @SuppressWarnings("unchecked")
     private static Map<Integer, Airport> loadAirportsFromFile(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
-            System.out.println("Airport database file not found: " + filename);
+            JOptionPane.showMessageDialog(null, "Airport database file not found: " + filename, 
+                                       "Warning", JOptionPane.WARNING_MESSAGE);
             return new HashMap<>();
         }
 
@@ -31,11 +35,13 @@ public class Main {
             if (obj instanceof Map) {
                 return (Map<Integer, Airport>) obj;
             } else {
-                System.out.println("Unexpected object type in airport file: " + obj.getClass());
+                JOptionPane.showMessageDialog(null, "Unexpected object type in airport file: " + obj.getClass(),
+                                           "Error", JOptionPane.ERROR_MESSAGE);
                 return new HashMap<>();
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading airport database from " + filename + ": " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error loading airport database from " + filename + ": " + e.getMessage(),
+                                       "Error", JOptionPane.ERROR_MESSAGE);
             return new HashMap<>();
         }
     }
@@ -44,7 +50,8 @@ public class Main {
     private static Map<Integer, Airplane> loadAirplanesFromFile(String filename) {
         File file = new File(filename);
         if (!file.exists()) {
-            System.out.println("Airplane database file not found: " + filename);
+            JOptionPane.showMessageDialog(null, "Airplane database file not found: " + filename,
+                                       "Warning", JOptionPane.WARNING_MESSAGE);
             return new HashMap<>();
         }
 
@@ -52,7 +59,6 @@ public class Main {
             Object obj = ois.readObject();
             
             if (obj instanceof ArrayList) {
-                // Handle AirplaneManager's ArrayList format
                 ArrayList<Airplane> airplaneList = (ArrayList<Airplane>) obj;
                 Map<Integer, Airplane> airplaneMap = new HashMap<>();
                 for (Airplane airplane : airplaneList) {
@@ -60,105 +66,136 @@ public class Main {
                 }
                 return airplaneMap;
             } else if (obj instanceof Map) {
-                // Handle direct Map format
                 return (Map<Integer, Airplane>) obj;
             } else {
-                System.out.println("Unexpected object type in airplane file: " + obj.getClass());
+                JOptionPane.showMessageDialog(null, "Unexpected object type in airplane file: " + obj.getClass(),
+                                           "Error", JOptionPane.ERROR_MESSAGE);
                 return new HashMap<>();
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading airplane database from " + filename + ": " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error loading airplane database from " + filename + ": " + e.getMessage(),
+                                       "Error", JOptionPane.ERROR_MESSAGE);
             return new HashMap<>();
         }
     }
 }
 
-class FlightPlanner {
-    private final Scanner scanner;
-
-    public FlightPlanner() {
-        this.scanner = new Scanner(System.in);
-    }
-   
+class FlightPlannerGUI {
     public void createFlightPlan(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
         if (airports.isEmpty() || airplanes.isEmpty()) {
-            System.out.println("Error: Airports or Airplanes database is empty!");
-            System.out.println("Airports available: " + airports.size());
-            System.out.println("Airplanes available: " + airplanes.size());
+            String message = "Error: Airports or Airplanes database is empty!\n" +
+                           "Airports available: " + airports.size() + "\n" +
+                           "Airplanes available: " + airplanes.size();
+            JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        System.out.println("\nAvailable Airports:");
+        // Display available airports
+        StringBuilder airportsList = new StringBuilder("Available Airports:\n");
         for (Airport airport : airports.values()) {
-            System.out.println("Key: " + airport.getKey() + " | Name: " + airport.getName() + 
-                           " | ICAO: " + airport.getIcao() + " | Coordinates: " + 
-                           airport.getLatitude() + ", " + airport.getLongitude());
+            airportsList.append("Key: ").append(airport.getKey())
+                       .append(" | Name: ").append(airport.getName())
+                       .append(" | ICAO: ").append(airport.getIcao())
+                       .append("\n");
         }
 
-        System.out.print("\nEnter departure airport key: ");
-        int departureKey = Integer.parseInt(scanner.nextLine());
+        // Get departure airport
+        Integer departureKey = getSelectionFromUser(airportsList.toString(), "Enter departure airport key:");
+        if (departureKey == null) return;
         Airport departureAirport = airports.get(departureKey);
         if (departureAirport == null) {
-            System.out.println("Invalid departure airport key!");
+            JOptionPane.showMessageDialog(null, "Invalid departure airport key!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        System.out.print("Enter destination airport key: ");
-        int destinationKey = Integer.parseInt(scanner.nextLine());
+        // Get destination airport
+        Integer destinationKey = getSelectionFromUser(airportsList.toString(), "Enter destination airport key:");
+        if (destinationKey == null) return;
         Airport destinationAirport = airports.get(destinationKey);
         if (destinationAirport == null) {
-            System.out.println("Invalid destination airport key!");
+            JOptionPane.showMessageDialog(null, "Invalid destination airport key!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        System.out.println("\nAvailable Airplanes:");
+        // Display available airplanes
+        StringBuilder airplanesList = new StringBuilder("Available Airplanes:\n");
         for (Airplane airplane : airplanes.values()) {
-            System.out.println("Key: " + airplane.getKey() + " | Make: " + airplane.getMake() + 
-                           " | Model: " + airplane.getModel() + " | Type: " + airplane.getAircraftType() +
-                           " | Fuel: " + airplane.getFuelSize() + " liters (" + 
-                           (airplane.getFuelType() == 1 ? "AVGAS" : "Jet") + ") | " +
-                           "Burn: " + airplane.getFuelBurn() + " l/hr | Speed: " + 
-                           airplane.getAirspeed() + " knots");
+            airplanesList.append("Key: ").append(airplane.getKey())
+                        .append(" | Make: ").append(airplane.getMake())
+                        .append(" | Model: ").append(airplane.getModel())
+                        .append(" | Type: ").append(airplane.getAircraftType())
+                        .append("\n");
         }
 
-        System.out.print("\nEnter airplane key to use: ");
-        int airplaneKey = Integer.parseInt(scanner.nextLine());
+        // Get selected airplane
+        Integer airplaneKey = getSelectionFromUser(airplanesList.toString(), "Enter airplane key to use:");
+        if (airplaneKey == null) return;
         Airplane airplane = airplanes.get(airplaneKey);
         if (airplane == null) {
-            System.out.println("Invalid airplane key!");
+            JOptionPane.showMessageDialog(null, "Invalid airplane key!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // Calculate flight details
         double distance = calculateDistance(departureAirport, destinationAirport);
         double flightTime = distance / airplane.getAirspeed();
         double fuelNeeded = flightTime * airplane.getFuelBurn();
 
-        System.out.println("\n===== Flight Plan Summary =====");
-        System.out.println("Departure: " + departureAirport.getName() + " (" + departureAirport.getIcao() + ")");
-        System.out.println("Destination: " + destinationAirport.getName() + " (" + destinationAirport.getIcao() + ")");
-        System.out.printf("Distance: %.2f nautical miles\n", distance);
-        System.out.printf("Estimated Flight Time: %.2f hours\n", flightTime);
-        System.out.printf("Estimated Fuel Needed: %.2f liters\n", fuelNeeded);
-        System.out.printf("Airplane Fuel Capacity: %.2f liters\n", airplane.getFuelSize());
+        // Build flight plan summary
+        StringBuilder summary = new StringBuilder();
+        summary.append("===== Flight Plan Summary =====\n");
+        summary.append("Departure: ").append(departureAirport.getName())
+              .append(" (").append(departureAirport.getIcao()).append(")\n");
+        summary.append("Destination: ").append(destinationAirport.getName())
+              .append(" (").append(destinationAirport.getIcao()).append(")\n");
+        summary.append(String.format("Distance: %.2f nautical miles%n", distance));
+        summary.append(String.format("Estimated Flight Time: %.2f hours%n", flightTime));
+        summary.append(String.format("Estimated Fuel Needed: %.2f liters%n", fuelNeeded));
+        summary.append(String.format("Airplane Fuel Capacity: %.2f liters%n", airplane.getFuelSize()));
 
         if (fuelNeeded > airplane.getFuelSize()) {
-            System.out.println("WARNING: This airplane will require refueling during the flight.");
-            System.out.printf("Additional fuel needed: %.2f liters\n", fuelNeeded - airplane.getFuelSize());
+            summary.append("WARNING: This airplane will require refueling during the flight.\n");
+            summary.append(String.format("Additional fuel needed: %.2f liters%n", fuelNeeded - airplane.getFuelSize()));
             
-            // Check if destination airport has the required fuel type
+            // Check fuel type compatibility
             if ((airplane.getFuelType() == 1 && destinationAirport.getFuelType() != 1 && destinationAirport.getFuelType() != 3) ||
                 (airplane.getFuelType() == 2 && destinationAirport.getFuelType() != 2 && destinationAirport.getFuelType() != 3)) {
-                System.out.println("WARNING: Destination airport doesn't have the required fuel type!");
+                summary.append("WARNING: Destination airport doesn't have the required fuel type!\n");
             }
         } else {
-            System.out.println("Flight can be completed without refueling.");
-            System.out.printf("Remaining fuel after flight: %.2f liters\n", airplane.getFuelSize() - fuelNeeded);
+            summary.append("Flight can be completed without refueling.\n");
+            summary.append(String.format("Remaining fuel after flight: %.2f liters%n", airplane.getFuelSize() - fuelNeeded));
         }
-        System.out.println("===============================");
+        summary.append("===============================");
+
+        // Display summary in scrollable pane
+        JTextArea textArea = new JTextArea(summary.toString());
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(500, 400));
+        JOptionPane.showMessageDialog(null, scrollPane, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private Integer getSelectionFromUser(String message, String prompt) {
+        JTextArea textArea = new JTextArea(message);
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(500, 300));
+        
+        Object[] components = {scrollPane, prompt};
+        String input = JOptionPane.showInputDialog(null, components, "Flight Planner", JOptionPane.QUESTION_MESSAGE);
+        
+        if (input == null) return null; // User cancelled
+        
+        try {
+            return Integer.parseInt(input.trim());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Please enter a valid number", "Error", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
     }
 
     private double calculateDistance(Airport a1, Airport a2) {
-        // Using Haversine formula for accurate distance calculation
         double lat1 = Math.toRadians(a1.getLatitude());
         double lon1 = Math.toRadians(a1.getLongitude());
         double lat2 = Math.toRadians(a2.getLatitude());
@@ -172,11 +209,11 @@ class FlightPlanner {
                    Math.pow(Math.sin(dLon / 2), 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        // Earth radius in nautical miles (3440.1 NM)
-        return 3440.1 * c;
+        return 3440.1 * c; // Earth radius in nautical miles
     }
 }
 
+// Airport and Airplane classes remain the same as in your original code
 class Airport implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
@@ -211,12 +248,12 @@ class Airport implements Serializable {
 }
 
 class Airplane implements Serializable {
-    private static final long serialVersionUID = -7817292208027958121L; // Matches AirplaneManager's version
+    private static final long serialVersionUID = -7817292208027958121L;
     private String make;
     private String model;
     private String aircraftType;
     private double fuelSize;
-    private int fuelType; // 1 = AVGAS, 2 = Jet
+    private int fuelType;
     private double fuelBurn;
     private int airspeed;
     private final int key;
