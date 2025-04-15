@@ -504,9 +504,9 @@ class Airport implements Serializable {
 }
 
 class AirportDatabase {
-    private Map<Integer, Airport> airports = new HashMap<>();
-    private int nextKey = 1;
-    private static String DATA_FILE = "airports.dat";
+    public Map<Integer, Airport> airports = new HashMap<>();
+    public int nextKey = 1;
+    public static String DATA_FILE = "airports.dat";
 
     public AirportDatabase() {
         loadAirports();
