@@ -6,20 +6,20 @@ public class FlightPlanner {
         this.scanner = new Scanner(System.in);
     }
 // might need to add methods to aiport/airplane classes
-    public void createFlightPlan(AirportDatabase AirportDBs, AirplaneDatabase airplaneDB) {
-        if (AirportsDB.getAllAirports().isEmpty() || airplaneDB.getAllAirplanes().isEmpty()) {
+    public void createFlightPlan(AirportDatabase airportDB, AirplaneDatabase airplaneDB) {
+        if (airportDB.getAllAirports().isEmpty() || airplaneDB.getAllAirplanes().isEmpty()) {
             System.out.println("Error: Airports or Airplanes database is empty!");
             return;
         }
 
         System.out.println("\nAvailable Airports:");
-        for (Airport airport : AirportsDB.getAllAirports()) {
+        for (Airport airport : airportDB.getAllAirports()) {
             System.out.println("Key: " + airport.getKey() + " | Name: " + airport.getName() + " | ICAO: " + airport.getIcao());
         }
 
         System.out.print("\nEnter departure airport key: ");
         int departureKey = Integer.parseInt(scanner.nextLine());
-        Airport departureAirport = AirportsDB.getAirport(departureKey);
+        Airport departureAirport = airportDB.getAirport(departureKey);
         if (departureAirport == null) {
             System.out.println("Invalid departure airport key!");
             return;
@@ -27,7 +27,7 @@ public class FlightPlanner {
 
         System.out.print("Enter destination airport key: ");
         int destinationKey = Integer.parseInt(scanner.nextLine());
-        Airport destinationAirport = AirportsDB.getAirport(destinationKey);
+        Airport destinationAirport = airportDB.getAirport(destinationKey);
         if (destinationAirport == null) {
             System.out.println("Invalid destination airport key!");
             return;
