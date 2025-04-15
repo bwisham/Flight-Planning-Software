@@ -1,14 +1,18 @@
+import java.io.*;
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Create an instance of FlightPlanner and use it as needed.
+        // Load databases from files
+        AirportDatabase airportDB = AirportDatabase.loadFromFile("airports.dat");
+        AirplaneDatabase airplaneDB = AirplaneDatabase.loadFromFile("airplanes.dat");
+       
+        if (airportDB == null || airplaneDB == null) {
+            System.out.println("Failed to load databases. Exiting...");
+            return;
+        }
+       
         FlightPlanner flightPlanner = new FlightPlanner();
-        // You would also need instances of AirportDatabase and AirplaneDatabase
-        // For illustration, assuming you have default constructors:
-        AirportDatabase airportDB = new AirportDatabase();
-        AirplaneDatabase airplaneDB = new AirplaneDatabase();
-        
         flightPlanner.createFlightPlan(airportDB, airplaneDB);
     }
 }
@@ -19,7 +23,7 @@ class FlightPlanner {
     public FlightPlanner() {
         this.scanner = new Scanner(System.in);
     }
-    
+   
     public void createFlightPlan(AirportDatabase airportDB, AirplaneDatabase airplaneDB) {
         if (airportDB.getAllAirports().isEmpty() || airplaneDB.getAllAirplanes().isEmpty()) {
             System.out.println("Error: Airports or Airplanes database is empty!");
@@ -83,4 +87,141 @@ class FlightPlanner {
         double longDifference = a2.getLongitude() - a1.getLongitude();
         return Math.sqrt(Math.pow(latDifference, 2) + Math.pow(longDifference, 2)) * 60;
     }
+}
+
+class AirportDatabase implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final List<Airport> airports;
+
+    public AirportDatabase() {
+        this.airports = new ArrayList<>();
+    }
+
+    public void addAirport(Airport airport) {
+        airports.add(airport);
+    }
+
+    public Airport getAirport(int key) {
+        return airports.stream().filter(a -> a.getKey() == key).findFirst().orElse(null);
+    }
+
+    public List<Airport> getAllAirports() {
+        return new ArrayList<>(airports);
+    }
+
+    public static AirportDatabase loadFromFile(String filename) {
+        File file = new File(filename);
+        if (!file.exists()) {
+            System.out.println("Database file not found: " + filename);
+            return new AirportDatabase();
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            return (AirportDatabase) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading database from " + filename + ": " + e.getMessage());
+            return new AirportDatabase();
+        }
+    }
+
+    public void saveToFile(String filename) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            System.out.println("Error saving database to " + filename + ": " + e.getMessage());
+        }
+    }
+}
+
+class AirplaneDatabase implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final List<Airplane> airplanes;
+
+    public AirplaneDatabase() {
+        this.airplanes = new ArrayList<>();
+    }
+
+    public void addAirplane(Airplane airplane) {
+        airplanes.add(airplane);
+    }
+
+    public Airplane getAirplane(int key) {
+        return airplanes.stream().filter(a -> a.getKey() == key).findFirst().orElse(null);
+    }
+
+    public List<Airplane> getAllAirplanes() {
+        return new ArrayList<>(airplanes);
+    }
+
+    public static AirplaneDatabase loadFromFile(String filename) {
+        File file = new File(filename);
+        if (!file.exists()) {
+            System.out.println("Database file not found: " + filename);
+            return new AirplaneDatabase();
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+            return (AirplaneDatabase) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading database from " + filename + ": " + e.getMessage());
+            return new AirplaneDatabase();
+        }
+    }
+
+    public void saveToFile(String filename) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            System.out.println("Error saving database to " + filename + ": " + e.getMessage());
+        }
+    }
+}
+
+class Airport implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final int key;
+    private final String name;
+    private final String icao;
+    private final double latitude;
+    private final double longitude;
+
+    public Airport(int key, String name, String icao, double latitude, double longitude) {
+        this.key = key;
+        this.name = name;
+        this.icao = icao;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public int getKey() { return key; }
+    public String getName() { return name; }
+    public String getIcao() { return icao; }
+    public double getLatitude() { return latitude; }
+    public double getLongitude() { return longitude; }
+}
+
+class Airplane implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final int key;
+    private final String make;
+    private final String model;
+    private final double airspeed;
+    private final double fuelBurn;
+    private final double fuelSize;
+
+    public Airplane(int key, String make, String model, double airspeed, double fuelBurn, double fuelSize) {
+        this.key = key;
+        this.make = make;
+        this.model = model;
+        this.airspeed = airspeed;
+        this.fuelBurn = fuelBurn;
+        this.fuelSize = fuelSize;
+    }
+
+    public int getKey() { return key; }
+    public String getMake() { return make; }
+    public String getModel() { return model; }
+    public double getAirspeed() { return airspeed; }
+    public double getFuelBurn() { return fuelBurn; }
+    public double getFuelSize() { return fuelSize; }
 }
