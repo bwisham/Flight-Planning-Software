@@ -14,8 +14,8 @@ public class AirportManager {
         try {
             String name = showInputDialogWithValidation(
                 "Enter the name of the airport:",
-                "Airport name cannot be empty and must be less than 40 characters. It also must be letters only.",
-                input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 40
+                "Airport name cannot be empty and must be less than 40 characters.",
+                input -> input != null && !input.trim().isEmpty() && input.length() <= 40
             );
 
             if (portDbase.airportNameExists(name)) {
@@ -23,9 +23,9 @@ public class AirportManager {
             }
 
             String icao = showInputDialogWithValidation(
-                "Enter the ICAO Identifier of the airport (4 letters):",
-                "ICAO must be exactly 4 alphabetic characters.",
-                input -> input != null && input.matches("[A-Za-z]{4}")
+                "Enter the ICAO Identifier of the airport (4 characters):",
+                "ICAO must be exactly 4 characters.",
+                input -> input != null && input.length() == 4
             ).toUpperCase();
 
             @SuppressWarnings("UnnecessaryUnboxing")
@@ -101,13 +101,13 @@ public class AirportManager {
             }
 
             String searchTerm = showInputDialogWithValidation(
-                choice == 0 ? "Enter airport name:" : "Enter ICAO identifier (4 letters):",
+                choice == 0 ? "Enter airport name:" : "Enter ICAO identifier (4 characters):",
                 "Search term cannot be empty",
                 input -> input != null && !input.trim().isEmpty()
             );
 
-            if (choice == 1 && !searchTerm.matches("[A-Za-z]{4}")) {
-                throw new IllegalArgumentException("ICAO must be exactly 4 alphabetic characters");
+            if (choice == 1 && searchTerm.length() != 4) {
+                throw new IllegalArgumentException("ICAO must be exactly 4 characters");
             }
 
             Airport result = portDbase.searchAirport(searchTerm);
@@ -142,8 +142,8 @@ public class AirportManager {
 
             String name = showInputDialogWithValidation(
                 "Enter new name (leave blank to keep current):",
-                "Airport name cannot be empty and must be less than 40 characters. It also must be letters only.",
-                input -> true || (input.matches("[A-Za-z ]+") && input.length() <= 40)
+                "Airport name cannot be empty and must be less than 40 characters.",
+                input -> input.isEmpty() || (!input.trim().isEmpty() && input.length() <= 40)
             );
             if (!name.isEmpty()) {
                 if (!name.equalsIgnoreCase(airport.getName())) {
@@ -156,8 +156,8 @@ public class AirportManager {
 
             String icao = showInputDialogWithValidation(
                 "Enter new ICAO (leave blank to keep current):",
-                "ICAO must be exactly 4 alphabetic characters",
-                input -> input.isEmpty() || input.matches("[A-Za-z]{4}")
+                "ICAO must be exactly 4 characters",
+                input -> input.isEmpty() || input.length() == 4
             );
             if (!icao.isEmpty()) {
                 airport.setIcao(icao.toUpperCase());
@@ -190,7 +190,7 @@ public class AirportManager {
                 true
             );
             if (fuelType != null && fuelType != 0) {
-                airport.setFuelType(fuelType.intValue());
+                airport.setFuelType(fuelType);
             }
 
             String radioType = showInputDialogWithValidation(
@@ -207,7 +207,7 @@ public class AirportManager {
                 "Invalid radio frequency. Must be positive.",
                 0.1, Double.MAX_VALUE,
                 true
-            ).doubleValue();
+            );
             if (radioFrequency != null && radioFrequency != 0) {
                 airport.setRadioFrequency(radioFrequency);
             }
@@ -295,14 +295,11 @@ public class AirportManager {
             if (airport.getName() == null || airport.getName().trim().isEmpty()) {
                 throw new IllegalArgumentException("Airport name cannot be empty");
             }
-            if (!airport.getName().matches("[A-Za-z ]+")) {
-                throw new IllegalArgumentException("Name must contain only letters and spaces");
-            }
             if (airport.getName().length() > 40) {
                 throw new IllegalArgumentException("Name cannot exceed 40 characters");
             }
-            if (airport.getIcao() == null || !airport.getIcao().matches("[A-Z]{4}")) {
-                throw new IllegalArgumentException("ICAO code must be exactly 4 uppercase letters");
+            if (airport.getIcao() == null || airport.getIcao().length() != 4) {
+                throw new IllegalArgumentException("ICAO code must be exactly 4 characters");
             }
             if (airport.getLatitude() < -90 || airport.getLatitude() > 90) {
                 throw new IllegalArgumentException("Latitude must be between -90 and 90");
