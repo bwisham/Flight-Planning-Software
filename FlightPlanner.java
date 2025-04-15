@@ -13,13 +13,13 @@ public class FlightPlanner {
         }
 
         System.out.println("\nAvailable Airports:");
-        for (Airport airport : airportDB.getAllAirports()) {
+        for (Airport airport : AirportsDB.getAllAirports()) {
             System.out.println("Key: " + airport.getKey() + " | Name: " + airport.getName() + " | ICAO: " + airport.getIcao());
         }
 
         System.out.print("\nEnter departure airport key: ");
         int departureKey = Integer.parseInt(scanner.nextLine());
-        Airport departureAirport = airportDB.getAirport(departureKey);
+        Airport departureAirport = AirportsDB.getAirport(departureKey);
         if (departureAirport == null) {
             System.out.println("Invalid departure airport key!");
             return;
