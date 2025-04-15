@@ -1,11 +1,25 @@
 import java.util.*;
 
-public class FlightPlanner {
+public class Main {
+    public static void main(String[] args) {
+        // Create an instance of FlightPlanner and use it as needed.
+        FlightPlanner flightPlanner = new FlightPlanner();
+        // You would also need instances of AirportDatabase and AirplaneDatabase
+        // For illustration, assuming you have default constructors:
+        AirportDatabase airportDB = new AirportDatabase();
+        AirplaneDatabase airplaneDB = new AirplaneDatabase();
+        
+        flightPlanner.createFlightPlan(airportDB, airplaneDB);
+    }
+}
+
+class FlightPlanner {
     private final Scanner scanner;
+
     public FlightPlanner() {
         this.scanner = new Scanner(System.in);
     }
-// might need to add methods to aiport/airplane classes
+    
     public void createFlightPlan(AirportDatabase airportDB, AirplaneDatabase airplaneDB) {
         if (airportDB.getAllAirports().isEmpty() || airplaneDB.getAllAirplanes().isEmpty()) {
             System.out.println("Error: Airports or Airplanes database is empty!");
@@ -40,7 +54,7 @@ public class FlightPlanner {
 
         System.out.print("\nEnter airplane key to use: ");
         int airplaneKey = Integer.parseInt(scanner.nextLine());
-        Airplane airplane = airplaneDB.getAirplane(airplaneKey);  // Fixed to match your method name
+        Airplane airplane = airplaneDB.getAirplane(airplaneKey);
         if (airplane == null) {
             System.out.println("Invalid airplane key!");
             return;
