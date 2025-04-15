@@ -89,6 +89,9 @@ public class Userclass {
             if (pnumber == null) return;
             if (!pnumber.matches("\\d{10}")) {
                 JOptionPane.showMessageDialog(null, "Invalid phone number! Must be exactly 10 digits.");
+            } else if (userDbase.phoneNumberExists(pnumber)) {
+                JOptionPane.showMessageDialog(null, "This phone number already exists in the system!");
+                pnumber = ""; // Force the loop to repeat
             }
         } while (!pnumber.matches("\\d{10}"));
 
@@ -107,8 +110,17 @@ public class Userclass {
             if (eaddress == null) return;
             if (eaddress.length() > MAX_EMAIL_LENGTH) {
                 JOptionPane.showMessageDialog(null, "Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
+            } else if (userDbase.emailExists(eaddress)) {
+                JOptionPane.showMessageDialog(null, "This email address already exists in the system!");
+                eaddress = ""; // Force the loop to repeat
             }
-        } while (eaddress.length() > MAX_EMAIL_LENGTH);
+        } while (eaddress.length() > MAX_EMAIL_LENGTH || eaddress.isEmpty());
+
+        // Check for duplicate user before proceeding
+        if (userDbase.userExists(fname, lname, pnumber, haddress, eaddress)) {
+            JOptionPane.showMessageDialog(null, "Error: A user with these exact details already exists in the system!");
+            return;
+        }
 
         btnSubmit(fname, lname, pnumber, haddress, eaddress);
     }
@@ -186,8 +198,13 @@ public class Userclass {
             do {
                 pnumber = JOptionPane.showInputDialog("Phone (" + user.getPhoneNumber() + "):");
                 if (pnumber == null) return;
-                if (!pnumber.isEmpty() && !pnumber.matches("\\d{10}")) {
-                    JOptionPane.showMessageDialog(null, "Invalid phone number! Must be exactly 10 digits.");
+                if (!pnumber.isEmpty()) {
+                    if (!pnumber.matches("\\d{10}")) {
+                        JOptionPane.showMessageDialog(null, "Invalid phone number! Must be exactly 10 digits.");
+                    } else if (userDbase.phoneNumberExists(pnumber) && !pnumber.equals(user.getPhoneNumber())) {
+                        JOptionPane.showMessageDialog(null, "This phone number already exists in the system!");
+                        pnumber = ""; // Force the loop to repeat
+                    }
                 }
             } while (!pnumber.isEmpty() && !pnumber.matches("\\d{10}"));
             
@@ -204,10 +221,16 @@ public class Userclass {
             do {
                 eaddress = JOptionPane.showInputDialog("Email (" + user.getEmailAddress() + "):");
                 if (eaddress == null) return;
-                if (!eaddress.isEmpty() && eaddress.length() > MAX_EMAIL_LENGTH) {
-                    JOptionPane.showMessageDialog(null, "Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
+                if (!eaddress.isEmpty()) {
+                    if (eaddress.length() > MAX_EMAIL_LENGTH) {
+                        JOptionPane.showMessageDialog(null, "Email too long! Max " + MAX_EMAIL_LENGTH + " characters allowed.");
+                    } else if (userDbase.emailExists(eaddress) && !eaddress.equalsIgnoreCase(user.getEmailAddress())) {
+                        JOptionPane.showMessageDialog(null, "This email address already exists in the system!");
+                        eaddress = ""; // Force the loop to repeat
+                    }
                 }
-            } while (!eaddress.isEmpty() && eaddress.length() > MAX_EMAIL_LENGTH);
+            } while (!eaddress.isEmpty() && (eaddress.length() > MAX_EMAIL_LENGTH || 
+                   (userDbase.emailExists(eaddress) && !eaddress.equalsIgnoreCase(user.getEmailAddress()))));
             
             User updatedUser = new User(
                 user.getId(),
@@ -340,6 +363,24 @@ class UserDatabase implements Serializable {
     
     public boolean userExists(int id) {
         return users.stream().anyMatch(user -> user.getId() == id);
+    }
+    
+    public boolean userExists(String fname, String lname, String pnumber, String haddress, String eaddress) {
+        return users.stream().anyMatch(user -> 
+            user.getFirstName().equalsIgnoreCase(fname) &&
+            user.getLastName().equalsIgnoreCase(lname) &&
+            user.getPhoneNumber().equals(pnumber) &&
+            user.getHomeAddress().equalsIgnoreCase(haddress) &&
+            user.getEmailAddress().equalsIgnoreCase(eaddress)
+        );
+    }
+    
+    public boolean phoneNumberExists(String phoneNumber) {
+        return users.stream().anyMatch(user -> user.getPhoneNumber().equals(phoneNumber));
+    }
+    
+    public boolean emailExists(String email) {
+        return users.stream().anyMatch(user -> user.getEmailAddress().equalsIgnoreCase(email));
     }
     
     public void addUser(User user) {
