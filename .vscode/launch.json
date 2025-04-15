@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "FlightPlanner",
+      "request": "launch",
+      "mainClass": "FlightPlanner",
+      "projectName": "Flight-Planning-Software_325800e7"
+    },
+    {
+      "type": "java",
       "name": "PlanningSoftware",
       "request": "launch",
       "mainClass": "PlanningSoftware",
