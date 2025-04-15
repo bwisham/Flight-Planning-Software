@@ -1,11 +1,11 @@
 public class Airport {
-    private String nameOfAirport;
-    private String ICAOIdentifier;
-    private float longitude;
-    private float latitude;
-    private float radioFrequency;
-    private String radioType;
-    private String fuelTypes;
+    public String nameOfAirport;
+    public String ICAOIdentifier;
+    public float longitude;
+    public float latitude;
+    public float radioFrequency;
+    public String radioType;
+    public String fuelTypes;
 
     public void setNameAirport(String nAirport) {
         this.nameOfAirport = nAirport;
