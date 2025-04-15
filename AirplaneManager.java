@@ -8,23 +8,61 @@
  * deleting airplanes, and displaying the airplane list.
  */
 
+ import java.io.*;
+ import java.util.ArrayList;
  import java.util.Collection;
  import java.util.HashMap;
  import java.util.Map;
  import javax.swing.*;
  
  public class AirplaneManager {
-     private final AirplaneDatabase planeDbase; // Database instance for airplanes
+     public AirplaneDatabase planeDbase; // Database instance for airplanes
+     public static String DATA_FILE = "airplanes.dat";
  
      // Constructor initializes the airplane database
      public AirplaneManager() {
          this.planeDbase = new AirplaneDatabase();
+         loadAirplanes(); // Load saved data when starting
+     }
+ 
+     /**
+      * Loads airplanes from file
+      */
+     @SuppressWarnings("unchecked")
+     private void loadAirplanes() {
+         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+             ArrayList<Airplane> loadedAirplanes = (ArrayList<Airplane>) ois.readObject();
+             for (Airplane airplane : loadedAirplanes) {
+                 planeDbase.addAirplane(airplane);
+                 // Ensure nextKey is always higher than any existing key
+                 if (airplane.getKey() >= planeDbase.getNextKey()) {
+                     planeDbase.setNextKey(airplane.getKey() + 1);
+                 }
+             }
+         } catch (FileNotFoundException e) {
+             // First run - no data file exists yet
+             System.out.println("No existing data file found. Starting with empty database.");
+         } catch (IOException | ClassNotFoundException e) {
+             showErrorDialog("Load Error", "Error loading airplane data: " + e.getMessage());
+         }
+     }
+ 
+     /**
+      * Saves airplanes to file
+      */
+     private void saveAirplanes() {
+         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+             oos.writeObject(new ArrayList<>(planeDbase.getAllAirplanes()));
+         } catch (IOException e) {
+             showErrorDialog("Save Error", "Error saving airplane data: " + e.getMessage());
+         }
      }
  
      /**
       * Adds a new airplane to the database after validating all input fields.
       * Collects airplane details through dialog boxes.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void addAirplane() {
          try {
              // Validate and get airplane make
@@ -55,11 +93,11 @@
                  0.1, Double.MAX_VALUE
              );
  
-             // Validate and get fuel type
-             String fuelType = showInputDialogWithValidation(
-                 "Input fuel type:",
-                 "Fuel Type cannot be empty or longer than 10 characters. You also must make sure to only use letters too.",
-                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 10
+             // Validate and get fuel type (1 for Aviation, 2 for Jet)
+             int fuelType = showNumericInputDialogWithValidation(
+                 "Enter fuel type (1 for Aviation fuel, 2 for Jet fuel):",
+                 "Invalid fuel type. Must be 1 or 2.",
+                 1, 2
              );
  
              // Validate and get fuel burn rate
@@ -82,10 +120,11 @@
  
              // Validate airplane data before adding to database
              if (!validateAirplaneData(airplane)) {
-                 throw new IllegalArgumentException("Airplane data validation failed");
+                 return; // Validation failed, error message already shown
              }
  
              planeDbase.addAirplane(airplane);
+             saveAirplanes(); // Save after adding
              JOptionPane.showMessageDialog(null, "Airplane added successfully with key: " + key);
  
          } catch (IllegalArgumentException e) {
@@ -99,6 +138,7 @@
       * Searches for an airplane by make, model, or type.
       * Displays search results in a dialog box.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void searchAirplane() {
          try {
              String[] options = {"By Make", "By Model", "By Type"};
@@ -142,6 +182,7 @@
       * Modifies an existing airplane's details.
       * Allows partial updates by keeping current values if fields are left blank.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void modifyAirplane() {
          try {
              Integer key = showNumericInputDialogWithValidation(
@@ -163,7 +204,7 @@
                  "Make must contain only letters and spaces and be ≤30 characters",
                  input -> input == null || input.isEmpty() || (input.matches("[A-Za-z ]+") && input.length() <= 30)
              );
-             if (!make.isEmpty()) {
+             if (make != null && !make.isEmpty()) {
                  airplane.setMake(make);
              }
  
@@ -173,17 +214,17 @@
                  "Model must contain only letters, numbers and spaces and be ≤100 characters",
                  input -> input == null || input.isEmpty() || (input.matches("[A-Za-z0-9 ]+") && input.length() <= 30)
              );
-             if (!model.isEmpty()) {
+             if (model != null && !model.isEmpty()) {
                  airplane.setModel(model);
              }
  
              // Update aircraft type if provided
              String aircraftType = showInputDialogWithValidation(
-                 "Enter aircraft type:",
+                 "Enter aircraft type (leave blank to keep current):",
                  "Aircraft type cannot be empty and can be no longer than 10 characters. You also must make sure to only use letters too.:",
-                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 10
+                 input -> input == null || input.isEmpty() || (input.matches("[A-Za-z ]+") && input.length() <= 10)
              );
-             if (aircraftType != null) {
+             if (aircraftType != null && !aircraftType.isEmpty()) {
                  airplane.setAircraftType(aircraftType);
              }
  
@@ -198,13 +239,14 @@
                  airplane.setFuelSize(fuelSize);
              }
  
-             // Update fuel type if provided
-             String fuelType = showInputDialogWithValidation(
-                 "Input fuel type:",
-                 "Fuel Type cannot be empty or longer than 10 characters. You also must make sure to only use letters too.",
-                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 10
+             // Update fuel type if provided (1 for Aviation, 2 for Jet)
+             Integer fuelType = showNumericInputDialogWithValidation(
+                 "Enter new fuel type (1 for Aviation fuel, 2 for Jet fuel, or 0 to keep current):",
+                 "Invalid fuel type. Must be 1 or 2.",
+                 1, 2,
+                 true
              );
-             if (fuelType != null) {
+             if (fuelType != null && fuelType != 0) {
                  airplane.setFuelType(fuelType);
              }
  
@@ -235,6 +277,7 @@
              }
  
              planeDbase.updateAirplane(airplane);
+             saveAirplanes(); // Save after modifying
              JOptionPane.showMessageDialog(null, "Airplane updated successfully.");
  
          } catch (IllegalArgumentException e) {
@@ -247,6 +290,7 @@
      /**
       * Deletes an airplane from the database after confirmation.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void deleteAirplane() {
          try {
              Integer key = showNumericInputDialogWithValidation(
@@ -270,6 +314,7 @@
              if (confirm == JOptionPane.YES_OPTION) {
                  boolean deleted = planeDbase.deleteAirplane(key);
                  if (deleted) {
+                     saveAirplanes(); // Save after deleting
                      JOptionPane.showMessageDialog(null, "Airplane deleted successfully.");
                  } else {
                      throw new IllegalStateException("Failed to delete airplane");
@@ -288,6 +333,7 @@
      /**
       * Displays a scrollable list of all airplanes in the database.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void printAirplaneList() {
          try {
              Collection<Airplane> airplanes = planeDbase.getAllAirplanes();
@@ -313,7 +359,7 @@
      }
  
      /**
-      * Validates airplane data against business rules.
+      * Validates airplane data against business rules and checks for duplicates.
       * @param airplane The airplane object to validate
       * @return true if valid, false otherwise
       */
@@ -340,7 +386,7 @@
              if (airplane.getModel().length() > 30) {
                  throw new IllegalArgumentException("Model cannot exceed 30 characters");
              }
-             if (airplane.getAircraftType() == null) {
+             if (airplane.getAircraftType() == null || airplane.getAircraftType().trim().isEmpty()) {
                  throw new IllegalArgumentException("Aircraft type must be selected");
              }
              if (!airplane.getAircraftType().matches("[A-Za-z ]+")) {
@@ -352,14 +398,8 @@
              if (airplane.getFuelSize() <= 0) {
                  throw new IllegalArgumentException("Fuel size must be positive");
              }
-             if (airplane.getFuelType() == null) {
-                 throw new IllegalArgumentException("Fuel type must be selected");
-             }
-             if (!airplane.getFuelType().matches("[A-Za-z ]+")) {
-                 throw new IllegalArgumentException("Fuel type must be letters only.");
-             }
-             if (airplane.getFuelType().length() > 10) {
-                 throw new IllegalArgumentException("Fuel type must not be greater than 10 characters.");
+             if (airplane.getFuelType() != 1 && airplane.getFuelType() != 2) {
+                 throw new IllegalArgumentException("Fuel type must be 1 (Aviation) or 2 (Jet)");
              }
              if (airplane.getFuelBurn() <= 0) {
                  throw new IllegalArgumentException("Fuel burn rate must be positive");
@@ -367,6 +407,21 @@
              if (airplane.getAirspeed() < 50 || airplane.getAirspeed() > 1000) {
                  throw new IllegalArgumentException("Airspeed must be between 50 and 1000 knots");
              }
+ 
+             // Check for duplicate airplane (all properties except key must not match)
+             for (Airplane existing : planeDbase.getAllAirplanes()) {
+                 if (existing.getKey() != airplane.getKey() && // Skip checking against itself
+                     existing.getMake().equalsIgnoreCase(airplane.getMake()) &&
+                     existing.getModel().equalsIgnoreCase(airplane.getModel()) &&
+                     existing.getAircraftType().equalsIgnoreCase(airplane.getAircraftType()) &&
+                     Math.abs(existing.getFuelSize() - airplane.getFuelSize()) < 0.001 && // Account for floating point precision
+                     existing.getFuelType() == airplane.getFuelType() &&
+                     Math.abs(existing.getFuelBurn() - airplane.getFuelBurn()) < 0.001 &&
+                     existing.getAirspeed() == airplane.getAirspeed()) {
+                     throw new IllegalArgumentException("An identical airplane already exists in the system");
+                 }
+             }
+             
              return true;
          } catch (IllegalArgumentException e) {
              showErrorDialog("Validation Error", e.getMessage());
@@ -475,6 +530,7 @@
      /**
       * Displays the main menu and handles user choices.
       */
+     @SuppressWarnings("UseSpecificCatch")
      public void showMenu() {
          String[] options = {
              "Add Airplane",
@@ -528,18 +584,18 @@
  /**
   * Represents an airplane with all its properties.
   */
- class Airplane {
+ class Airplane implements Serializable {
      private String make;
      private String model;
      private String aircraftType;
      private double fuelSize;
-     private String fuelType;
+     private int fuelType; // 1 for Aviation fuel, 2 for Jet fuel
      private double fuelBurn;
      private int airspeed;
      private final int key;
  
      public Airplane(String make, String model, String aircraftType, double fuelSize,
-                    String fuelType, double fuelBurn, int airspeed, int key) {
+                    int fuelType, double fuelBurn, int airspeed, int key) {
          this.make = make;
          this.model = model;
          this.aircraftType = aircraftType;
@@ -559,8 +615,8 @@
      public void setAircraftType(String aircraftType) { this.aircraftType = aircraftType; }
      public double getFuelSize() { return fuelSize; }
      public void setFuelSize(double fuelSize) { this.fuelSize = fuelSize; }
-     public String getFuelType() { return fuelType; }
-     public void setFuelType(String fuelType) { this.fuelType = fuelType; }
+     public int getFuelType() { return fuelType; }
+     public void setFuelType(int fuelType) { this.fuelType = fuelType; }
      public double getFuelBurn() { return fuelBurn; }
      public void setFuelBurn(double fuelBurn) { this.fuelBurn = fuelBurn; }
      public int getAirspeed() { return airspeed; }
@@ -569,10 +625,11 @@
   
      @Override
      public String toString() {
+         String fuelTypeString = (fuelType == 1) ? "Aviation fuel" : "Jet fuel";
          return String.format(
              "Airplane [Key: %d, Make: %s, Model: %s, Type: %s\n" +
              "Fuel: %s (%.1f liters), Burn Rate: %.1f liters/hr, Cruising Speed: %d knots]",
-             key, make, model, aircraftType, fuelType, fuelSize, fuelBurn, airspeed
+             key, make, model, aircraftType, fuelTypeString, fuelSize, fuelBurn, airspeed
          );
      }
  }
@@ -581,7 +638,7 @@
   * In-memory database for storing and managing airplane data.
   */
  class AirplaneDatabase {
-     private final Map<Integer, Airplane> airplanes = new HashMap<>();
+     private Map<Integer, Airplane> airplanes = new HashMap<>();
      private int nextKey = 1;
  
      public void addAirplane(Airplane airplane) {
@@ -595,21 +652,24 @@
      public Airplane searchAirplane(String searchTerm, int searchType) {
          for (Airplane airplane : airplanes.values()) {
              switch (searchType) {
-                 case 0: // By Make
+                 case 0 -> {
+                     // By Make
                      if (airplane.getMake().equalsIgnoreCase(searchTerm)) {
                          return airplane;
                      }
-                     break;
-                 case 1: // By Model
+                 }
+                 case 1 -> {
+                     // By Model
                      if (airplane.getModel().equalsIgnoreCase(searchTerm)) {
                          return airplane;
                      }
-                     break;
-                 case 2: // By Type
+                 }
+                 case 2 -> {
+                     // By Type
                      if (airplane.getAircraftType().equalsIgnoreCase(searchTerm)) {
                          return airplane;
                      }
-                     break;
+                 }
              }
          }
          return null;
@@ -630,5 +690,8 @@
      public int getNextKey() {
          return nextKey++;
      }
+     
+     public void setNextKey(int key) {
+         this.nextKey = key;
+     }
  }
- 
