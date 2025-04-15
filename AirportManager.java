@@ -396,7 +396,7 @@ public class AirportManager {
         }
     }
 
-    private int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
+    public int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
         while (true) {
             try {
                 String input = JOptionPane.showInputDialog(message);
@@ -414,7 +414,7 @@ public class AirportManager {
         }
     }
 
-    private void showErrorDialog(String title, String message) {
+    public void showErrorDialog(String title, String message) {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
@@ -470,15 +470,15 @@ public class AirportManager {
 }
 
 class Airport implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private String name;
-    private String icao;
-    private double latitude;
-    private double longitude;
-    private int fuelType;
-    private final int key;
-    private String radioType;
-    private double radioFrequency;
+    public static final long serialVersionUID = 1L;
+    public String name;
+    public String icao;
+    public double latitude;
+    public double longitude;
+    public int fuelType;
+    public final int key;
+    public String radioType;
+    public double radioFrequency;
 
     public Airport(String name, String icao, double latitude, double longitude, 
                   int fuelType, int key, String radioType, double radioFrequency) {
@@ -524,7 +524,7 @@ class AirportDatabase {
         loadAirports();
     }
 
-    private void loadAirports() {
+    public void loadAirports() {
         File file = new File(DATA_FILE);
         if (file.exists()) {
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
@@ -537,7 +537,7 @@ class AirportDatabase {
         }
     }
 
-    private void saveAirports() {
+    public void saveAirports() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
             oos.writeObject(airports);
         } catch (IOException e) {
