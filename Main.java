@@ -17,7 +17,7 @@ public class Main {
                 return;
             }
            
-            new FlightPlannerGUI().createFlightPlan(airports, airplanes);
+            new FlightPlannerGUI().showMainMenu(airports, airplanes);
         });
     }
 
@@ -81,6 +81,41 @@ public class Main {
 }
 
 class FlightPlannerGUI {
+    private static final String DISCLAIMER = 
+        "DISCLAIMER:\n\n" +
+        "This flight planning tool is for RECREATIONAL USE ONLY.\n" +
+        "It should NOT be used for actual flight planning.\n\n" +
+        "Always consult official aviation resources and professionals\n" +
+        "for real-world flight planning.\n\n" +
+        "By using this tool, you acknowledge that it provides\n" +
+        "approximations only and should not be relied upon\n" +
+        "for actual flight operations.";
+
+    public void showMainMenu(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
+        while (true) {
+            // Show disclaimer every time
+            JOptionPane.showMessageDialog(null, DISCLAIMER, "Important Notice", JOptionPane.WARNING_MESSAGE);
+            
+            String[] options = {"Create Flight Plan", "Exit"};
+            int choice = JOptionPane.showOptionDialog(null, 
+                "Flight Planning System (Recreational Use Only)",
+                "Main Menu",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[0]);
+            
+            if (choice == 1 || choice == JOptionPane.CLOSED_OPTION) {
+                JOptionPane.showMessageDialog(null, "Thank you for using the Flight Planner", "Goodbye", JOptionPane.INFORMATION_MESSAGE);
+                return; // Exit program
+            }
+            
+            // User chose to create flight plan
+            createFlightPlan(airports, airplanes);
+        }
+    }
+
     public void createFlightPlan(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
         if (airports.isEmpty() || airplanes.isEmpty()) {
             String message = "Error: Airports or Airplanes database is empty!\n" +
@@ -174,6 +209,23 @@ class FlightPlannerGUI {
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new java.awt.Dimension(500, 400));
         JOptionPane.showMessageDialog(null, scrollPane, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
+
+        // Ask user what to do next
+        String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
+        int choice = JOptionPane.showOptionDialog(null, 
+            "Flight plan completed. What would you like to do next?",
+            "Flight Plan Complete",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+        
+        if (choice == 1) {
+            return; // Return to main menu
+        }
+        // Otherwise, create another flight plan
+        createFlightPlan(airports, airplanes);
     }
 
     private Integer getSelectionFromUser(String message, String prompt) {
@@ -213,7 +265,6 @@ class FlightPlannerGUI {
     }
 }
 
-// Airport and Airplane classes remain the same as in your original code
 class Airport implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
