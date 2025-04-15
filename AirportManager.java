@@ -48,6 +48,10 @@ public class AirportManager {
                 false
             ).doubleValue();
 
+            if (portDbase.coordinatesExist(latitude, longitude)) {
+                throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+            }
+
             int fuelType = showNumericInputDialogWithValidation(
                 "Enter the fuel types the airport supports (1-3). 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
                 "Invalid fuel type. Must be between 1 and 3.",
@@ -180,6 +184,10 @@ public class AirportManager {
                 true
             );
             if (latitude != null && latitude != 0) {
+                if (portDbase.coordinatesExist(latitude, airport.getLongitude()) && 
+                    !(airport.getLatitude() == latitude && airport.getLongitude() == airport.getLongitude())) {
+                    throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+                }
                 airport.setLatitude(latitude);
             }
 
@@ -190,6 +198,10 @@ public class AirportManager {
                 true
             );
             if (longitude != null && longitude != 0) {
+                if (portDbase.coordinatesExist(airport.getLatitude(), longitude) && 
+                    !(airport.getLatitude() == airport.getLatitude() && airport.getLongitude() == longitude)) {
+                    throw new IllegalArgumentException("An airport already exists at these exact coordinates.");
+                }
                 airport.setLongitude(longitude);
             }
 
@@ -559,6 +571,11 @@ class AirportDatabase {
     public boolean icaoExists(String icao) {
         return airports.values().stream()
             .anyMatch(a -> a.getIcao().equalsIgnoreCase(icao));
+    }
+
+    public boolean coordinatesExist(double latitude, double longitude) {
+        return airports.values().stream()
+            .anyMatch(a -> a.getLatitude() == latitude && a.getLongitude() == longitude);
     }
 
     public void updateAirport(Airport airport) {

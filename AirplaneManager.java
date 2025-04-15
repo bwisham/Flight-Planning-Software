@@ -25,6 +25,10 @@
          this.planeDbase = new AirplaneDatabase();
          loadAirplanes(); // Load saved data when starting
      }
+
+    public AirplaneManager(AirplaneDatabase planeDbase) {
+        this.planeDbase = planeDbase;
+    }
  
      /**
       * Loads airplanes from file
