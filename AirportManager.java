@@ -28,6 +28,10 @@ public class AirportManager {
                 input -> input != null && input.length() == 4
             ).toUpperCase();
 
+            if (portDbase.icaoExists(icao)) {
+                throw new IllegalArgumentException("An airport with this ICAO code already exists.");
+            }
+
             @SuppressWarnings("UnnecessaryUnboxing")
             double latitude = showNumericInputDialogWithValidation(
                 "Enter the latitude of the airport (-90 to 90):",
@@ -160,7 +164,13 @@ public class AirportManager {
                 input -> input.isEmpty() || input.length() == 4
             );
             if (!icao.isEmpty()) {
-                airport.setIcao(icao.toUpperCase());
+                icao = icao.toUpperCase();
+                if (!icao.equalsIgnoreCase(airport.getIcao())) {
+                    if (portDbase.icaoExists(icao)) {
+                        throw new IllegalArgumentException("An airport with this ICAO code already exists.");
+                    }
+                    airport.setIcao(icao);
+                }
             }
 
             Double latitude = showNumericInputDialogWithValidation(
@@ -544,6 +554,11 @@ class AirportDatabase {
     public boolean airportNameExists(String name) {
         return airports.values().stream()
             .anyMatch(a -> a.getName().equalsIgnoreCase(name));
+    }
+
+    public boolean icaoExists(String icao) {
+        return airports.values().stream()
+            .anyMatch(a -> a.getIcao().equalsIgnoreCase(icao));
     }
 
     public void updateAirport(Airport airport) {

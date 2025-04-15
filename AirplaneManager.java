@@ -120,7 +120,7 @@ public class AirplaneManager {
 
             // Validate airplane data before adding to database
             if (!validateAirplaneData(airplane)) {
-                throw new IllegalArgumentException("Airplane data validation failed");
+                return; // Validation failed, error message already shown
             }
 
             planeDbase.addAirplane(airplane);
@@ -359,7 +359,7 @@ public class AirplaneManager {
     }
 
     /**
-     * Validates airplane data against business rules.
+     * Validates airplane data against business rules and checks for duplicates.
      * @param airplane The airplane object to validate
      * @return true if valid, false otherwise
      */
@@ -407,6 +407,21 @@ public class AirplaneManager {
             if (airplane.getAirspeed() < 50 || airplane.getAirspeed() > 1000) {
                 throw new IllegalArgumentException("Airspeed must be between 50 and 1000 knots");
             }
+
+            // Check for duplicate airplane (all properties except key must not match)
+            for (Airplane existing : planeDbase.getAllAirplanes()) {
+                if (existing.getKey() != airplane.getKey() && // Skip checking against itself
+                    existing.getMake().equalsIgnoreCase(airplane.getMake()) &&
+                    existing.getModel().equalsIgnoreCase(airplane.getModel()) &&
+                    existing.getAircraftType().equalsIgnoreCase(airplane.getAircraftType()) &&
+                    Math.abs(existing.getFuelSize() - airplane.getFuelSize()) < 0.001 && // Account for floating point precision
+                    existing.getFuelType() == airplane.getFuelType() &&
+                    Math.abs(existing.getFuelBurn() - airplane.getFuelBurn()) < 0.001 &&
+                    existing.getAirspeed() == airplane.getAirspeed()) {
+                    throw new IllegalArgumentException("An identical airplane already exists in the system");
+                }
+            }
+            
             return true;
         } catch (IllegalArgumentException e) {
             showErrorDialog("Validation Error", e.getMessage());
