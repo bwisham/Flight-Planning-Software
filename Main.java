@@ -1,13 +1,6 @@
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 public class Main {
     public static void main(String[] args) {
@@ -150,13 +143,71 @@ class FlightPlannerGUI {
             return;
         }
 
+        // Create list of stops (starting with departure)
+        List<Airport> route = new ArrayList<>();
+        route.add(departureAirport);
+
+        // Allow user to add intermediate stops
+        while (true) {
+            int response = JOptionPane.showConfirmDialog(null, 
+                "Would you like to add an intermediate stop?", 
+                "Add Stop", 
+                JOptionPane.YES_NO_OPTION);
+            
+            if (response != JOptionPane.YES_OPTION) {
+                break;
+            }
+            
+            while (true) {
+                Integer stopKey = getSelectionFromUser(airportsList.toString(), "Enter intermediate airport key:");
+                if (stopKey == null) break;
+                
+                Airport stopAirport = airports.get(stopKey);
+                if (stopAirport == null) {
+                    JOptionPane.showMessageDialog(null, "Invalid airport key!", "Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                
+                // Check if this is the same as the last airport in the route
+                if (!route.isEmpty() && stopAirport.getKey() == route.get(route.size()-1).getKey()) {
+                    JOptionPane.showMessageDialog(null, 
+                        "Error: You cannot add the same airport consecutively!\n" +
+                        "Current last stop: " + route.get(route.size()-1).getName() + 
+                        " (" + route.get(route.size()-1).getIcao() + ")",
+                        "Invalid Stop", 
+                        JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                
+                route.add(stopAirport);
+                break;
+            }
+        }
+
         // Get destination airport
-        Integer destinationKey = getSelectionFromUser(airportsList.toString(), "Enter destination airport key:");
-        if (destinationKey == null) return;
-        Airport destinationAirport = airports.get(destinationKey);
-        if (destinationAirport == null) {
-            JOptionPane.showMessageDialog(null, "Invalid destination airport key!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+        while (true) {
+            Integer destinationKey = getSelectionFromUser(airportsList.toString(), "Enter destination airport key:");
+            if (destinationKey == null) return;
+            
+            Airport destinationAirport = airports.get(destinationKey);
+            if (destinationAirport == null) {
+                JOptionPane.showMessageDialog(null, "Invalid destination airport key!", "Error", JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            
+            // Check if destination is same as last stop
+            if (!route.isEmpty() && destinationAirport.getKey() == route.get(route.size()-1).getKey()) {
+                JOptionPane.showMessageDialog(null, 
+                    "Error: Destination cannot be the same as your last stop!\n" +
+                    "Current last stop: " + route.get(route.size()-1).getName() + 
+                    " (" + route.get(route.size()-1).getIcao() + ")",
+                    "Invalid Destination", 
+                    JOptionPane.ERROR_MESSAGE);
+                continue;
+            }
+            
+            route.add(destinationAirport);
+            break;
         }
 
         // Display available airplanes
@@ -178,59 +229,62 @@ class FlightPlannerGUI {
             return;
         }
 
-        // Calculate flight details
-        double distance = calculateDistance(departureAirport, destinationAirport);
-        double flightTime = distance / airplane.getAirspeed();
-        double fuelNeeded = flightTime * airplane.getFuelBurn();
+        // Calculate flight details for each leg and totals
+        double totalDistance = 0;
+        double totalFlightTime = 0;
+        StringBuilder legsInfo = new StringBuilder();
+        
+        for (int i = 0; i < route.size() - 1; i++) {
+            Airport from = route.get(i);
+            Airport to = route.get(i + 1);
+            double distance = calculateDistance(from, to);
+            double flightTime = distance / airplane.getAirspeed();
+            
+            totalDistance += distance;
+            totalFlightTime += flightTime;
+            
+            legsInfo.append(String.format("Leg %d: %s (%s) to %s (%s)\n", i+1, 
+                from.getName(), from.getIcao(), to.getName(), to.getIcao()));
+            legsInfo.append(String.format("  Distance: %.2f nm | Time: %.2f hours\n\n", distance, flightTime));
+        }
+
+        double fuelNeeded = totalFlightTime * airplane.getFuelBurn();
 
         // Build flight plan summary
         StringBuilder summary = new StringBuilder();
         summary.append("===== Flight Plan Summary =====\n");
-        summary.append("Departure: ").append(departureAirport.getName())
-              .append(" (").append(departureAirport.getIcao()).append(")\n");
-        summary.append("Destination: ").append(destinationAirport.getName())
-              .append(" (").append(destinationAirport.getIcao()).append(")\n");
-        summary.append(String.format("Distance: %.2f nautical miles%n", distance));
-        summary.append(String.format("Estimated Flight Time: %.2f hours%n", flightTime));
-        summary.append(String.format("Estimated Fuel Needed: %.2f liters%n", fuelNeeded));
+        summary.append("Route:\n").append(legsInfo);
+        summary.append("\nTOTALS:\n");
+        summary.append(String.format("Total Distance: %.2f nautical miles%n", totalDistance));
+        summary.append(String.format("Total Flight Time: %.2f hours%n", totalFlightTime));
+        summary.append(String.format("Total Fuel Needed: %.2f liters%n", fuelNeeded));
         summary.append(String.format("Airplane Fuel Capacity: %.2f liters%n", airplane.getFuelSize()));
 
         if (fuelNeeded > airplane.getFuelSize()) {
             summary.append("WARNING: This airplane will require refueling during the flight.\n");
             summary.append(String.format("Additional fuel needed: %.2f liters%n", fuelNeeded - airplane.getFuelSize()));
             
-            // Check fuel type compatibility
-            if ((airplane.getFuelType() == 1 && destinationAirport.getFuelType() != 1 && destinationAirport.getFuelType() != 3) ||
-                (airplane.getFuelType() == 2 && destinationAirport.getFuelType() != 2 && destinationAirport.getFuelType() != 3)) {
-                summary.append("WARNING: Destination airport doesn't have the required fuel type!\n");
+            // Check fuel type compatibility for all stops
+            for (Airport stop : route) {
+                if ((airplane.getFuelType() == 1 && stop.getFuelType() != 1 && stop.getFuelType() != 3) ||
+                    (airplane.getFuelType() == 2 && stop.getFuelType() != 2 && stop.getFuelType() != 3)) {
+                    summary.append("WARNING: ").append(stop.getName())
+                          .append(" doesn't have the required fuel type!\n");
+                }
             }
         } else {
             summary.append("Flight can be completed without refueling.\n");
             summary.append(String.format("Remaining fuel after flight: %.2f liters%n", airplane.getFuelSize() - fuelNeeded));
         }
+        summary.append("===============================");
+
         // Display summary in scrollable pane
-       // Create a panel with the summary and a "View on Map" button
-       JPanel panel = new JPanel(new BorderLayout());
-        
-       // Add the text summary
-       JTextArea textArea = new JTextArea(summary.toString());
-       textArea.setEditable(false);
-       JScrollPane scrollPane = new JScrollPane(textArea);
-       scrollPane.setPreferredSize(new Dimension(500, 350));
-       panel.add(scrollPane, BorderLayout.CENTER);
-       
-       // Create and add the "View on Map" button
-       JButton mapButton = new JButton("View Flight Plan on OpenStreetMap");
-       mapButton.addActionListener(new ActionListener() {
-           @Override
-           public void actionPerformed(ActionEvent e) {
-               openInBrowser(departureAirport, destinationAirport);
-           }
-       });
-       panel.add(mapButton, BorderLayout.SOUTH);
-       
-       // Display the panel
-       JOptionPane.showMessageDialog(null, panel, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
+        JTextArea textArea = new JTextArea(summary.toString());
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(500, 400));
+        JOptionPane.showMessageDialog(null, scrollPane, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
+
         // Ask user what to do next
         String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
         int choice = JOptionPane.showOptionDialog(null, 
@@ -248,33 +302,7 @@ class FlightPlannerGUI {
         // Otherwise, create another flight plan
         createFlightPlan(airports, airplanes);
     }
-    private void openInBrowser(Airport departure, Airport destination) {
-        try {
-            // Format coordinates for OpenStreetMap URL
-            String url = String.format(
-                "https://www.openstreetmap.org/directions?engine=graphhopper_car&route=%f,%f;%f,%f",
-                departure.getLatitude(),
-                departure.getLongitude(),
-                destination.getLatitude(),
-                destination.getLongitude()
-            );
-            
-            // Open in default browser
-            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(new URI(url));
-            } else {
-                JOptionPane.showMessageDialog(null, 
-                    "Couldn't open browser automatically. Please visit:\n" + url, 
-                    "OpenStreetMap Link", 
-                    JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch (IOException | URISyntaxException e) {
-            JOptionPane.showMessageDialog(null, 
-                "Error opening browser: " + e.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-        }
-    }
+
     private Integer getSelectionFromUser(String message, String prompt) {
         JTextArea textArea = new JTextArea(message);
         textArea.setEditable(false);
