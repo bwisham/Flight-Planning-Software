@@ -83,13 +83,8 @@ public class Main {
 class FlightPlannerGUI {
     private static final String DISCLAIMER = 
         "DISCLAIMER:\n\n" +
-        "This flight planning tool is for RECREATIONAL USE ONLY.\n" +
-        "It should NOT be used for actual flight planning.\n\n" +
-        "Always consult official aviation resources and professionals\n" +
-        "for real-world flight planning.\n\n" +
-        "By using this tool, you acknowledge that it provides\n" +
-        "approximations only and should not be relied upon\n" +
-        "for actual flight operations.";
+        "THIS SOFTWARE IS NOT TO BE USED FOR FLIGHT PLANNING OR NAVIGATIONAL PURPOSES\n";
+        
 
     public void showMainMenu(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
         while (true) {
