@@ -232,8 +232,14 @@ class FlightPlannerGUI {
         // Calculate flight details for each leg and totals
         double totalDistance = 0;
         double totalFlightTime = 0;
+        double averageHeading = 0;
+        int legCount = 0;
         StringBuilder legsInfo = new StringBuilder();
+        List<Airport> fullRoute = new ArrayList<>();
+        boolean flightPossible = true;
+        String impossibilityReason = "";
         
+        // Calculate initial route legs
         for (int i = 0; i < route.size() - 1; i++) {
             Airport from = route.get(i);
             Airport to = route.get(i + 1);
@@ -243,11 +249,74 @@ class FlightPlannerGUI {
             
             totalDistance += distance;
             totalFlightTime += flightTime;
+            averageHeading += heading;
+            legCount++;
             
-            legsInfo.append(String.format("Leg %d: %s (%s) to %s (%s)\n", i+1, 
+            legsInfo.append(String.format("Leg %d: %s (%s) to %s (%s)\n", legCount, 
                 from.getName(), from.getIcao(), to.getName(), to.getIcao()));
             legsInfo.append(String.format("  Distance: %.2f nm | Time: %.2f hours | Heading: %.1f°\n\n", 
                 distance, flightTime, heading));
+            
+            fullRoute.add(from);
+        }
+        fullRoute.add(route.get(route.size()-1)); // Add final destination
+        
+        // Check if refueling stops are needed and add them
+        double maxLegDistance = airplane.getFuelSize() / airplane.getFuelBurn() * airplane.getAirspeed();
+        List<Airport> routeWithRefuel = new ArrayList<>();
+        routeWithRefuel.add(fullRoute.get(0));
+        
+        for (int i = 1; i < fullRoute.size(); i++) {
+            Airport prev = routeWithRefuel.get(routeWithRefuel.size()-1);
+            Airport current = fullRoute.get(i);
+            double legDistance = calculateDistance(prev, current);
+            
+            if (legDistance > maxLegDistance) {
+                // Need to find refueling stops
+                List<Airport> refuelStops = findRefuelStops(prev, current, airports, airplane, maxLegDistance);
+                if (refuelStops.isEmpty()) {
+                    flightPossible = false;
+                    impossibilityReason = String.format(
+                        "No suitable refueling airports between %s and %s (distance: %.1f nm, max range: %.1f nm)",
+                        prev.getName(), current.getName(), legDistance, maxLegDistance);
+                    break;
+                }
+                routeWithRefuel.addAll(refuelStops);
+            }
+            routeWithRefuel.add(current);
+        }
+        
+        // Recalculate totals if we added refueling stops
+        if (flightPossible && routeWithRefuel.size() > fullRoute.size()) {
+            totalDistance = 0;
+            totalFlightTime = 0;
+            averageHeading = 0;
+            legCount = 0;
+            legsInfo = new StringBuilder();
+            
+            for (int i = 0; i < routeWithRefuel.size() - 1; i++) {
+                Airport from = routeWithRefuel.get(i);
+                Airport to = routeWithRefuel.get(i + 1);
+                double distance = calculateDistance(from, to);
+                double heading = calculateHeading(from, to);
+                double flightTime = distance / airplane.getAirspeed();
+                
+                totalDistance += distance;
+                totalFlightTime += flightTime;
+                averageHeading += heading;
+                legCount++;
+                
+                String legType = (i < route.size() && route.contains(from) && route.contains(to)) ? 
+                    "Main Route" : "Refuel Stop";
+                
+                legsInfo.append(String.format("%s Leg %d: %s (%s) to %s (%s)\n", legType, legCount,
+                    from.getName(), from.getIcao(), to.getName(), to.getIcao()));
+                legsInfo.append(String.format("  Distance: %.2f nm | Time: %.2f hours | Heading: %.1f°\n\n", 
+                    distance, flightTime, heading));
+            }
+            averageHeading /= legCount;
+        } else {
+            averageHeading /= legCount;
         }
 
         double fuelNeeded = totalFlightTime * airplane.getFuelBurn();
@@ -257,26 +326,26 @@ class FlightPlannerGUI {
         summary.append("===== Flight Plan Summary =====\n");
         summary.append("Route:\n").append(legsInfo);
         summary.append("\nTOTALS:\n");
-        summary.append(String.format("Total Distance: %.2f nautical miles%n", totalDistance));
-        summary.append(String.format("Total Flight Time: %.2f hours%n", totalFlightTime));
-        summary.append(String.format("Total Fuel Needed: %.2f liters%n", fuelNeeded));
-        summary.append(String.format("Airplane Fuel Capacity: %.2f liters%n", airplane.getFuelSize()));
-
-        if (fuelNeeded > airplane.getFuelSize()) {
-            summary.append("WARNING: This airplane will require refueling during the flight.\n");
-            summary.append(String.format("Additional fuel needed: %.2f liters%n", fuelNeeded - airplane.getFuelSize()));
-            
-            // Check fuel type compatibility for all stops
-            for (Airport stop : route) {
-                if ((airplane.getFuelType() == 1 && stop.getFuelType() != 1 && stop.getFuelType() != 3) ||
-                    (airplane.getFuelType() == 2 && stop.getFuelType() != 2 && stop.getFuelType() != 3)) {
-                    summary.append("WARNING: ").append(stop.getName())
-                          .append(" doesn't have the required fuel type!\n");
-                }
-            }
+        
+        if (!flightPossible) {
+            summary.append("FLIGHT IMPOSSIBLE: ").append(impossibilityReason).append("\n\n");
         } else {
-            summary.append("Flight can be completed without refueling.\n");
-            summary.append(String.format("Remaining fuel after flight: %.2f liters%n", airplane.getFuelSize() - fuelNeeded));
+            summary.append(String.format("Total Distance: %.2f nautical miles%n", totalDistance));
+            summary.append(String.format("Total Flight Time: %.2f hours%n", totalFlightTime));
+            summary.append(String.format("Average Heading: %.1f°%n", averageHeading));
+            summary.append(String.format("Total Fuel Needed: %.2f liters%n", fuelNeeded));
+            summary.append(String.format("Airplane Fuel Capacity: %.2f liters%n", airplane.getFuelSize()));
+
+            if (routeWithRefuel.size() > fullRoute.size()) {
+                summary.append("\nNOTE: Refueling stops were automatically added to the route\n");
+            }
+
+            if (fuelNeeded > airplane.getFuelSize()) {
+                summary.append("WARNING: This flight requires refueling stops (already added to route)\n");
+            } else {
+                summary.append("Flight can be completed without refueling.\n");
+                summary.append(String.format("Remaining fuel after flight: %.2f liters%n", airplane.getFuelSize() - fuelNeeded));
+            }
         }
         summary.append("===============================");
 
@@ -303,6 +372,61 @@ class FlightPlannerGUI {
         }
         // Otherwise, create another flight plan
         createFlightPlan(airports, airplanes);
+    }
+
+    private List<Airport> findRefuelStops(Airport from, Airport to, Map<Integer, Airport> airports, 
+                                        Airplane airplane, double maxLegDistance) {
+        List<Airport> refuelStops = new ArrayList<>();
+        Airport current = from;
+        double remainingDistance = calculateDistance(from, to);
+        
+        while (remainingDistance > maxLegDistance) {
+            Airport bestStop = null;
+            double bestDistance = 0;
+            
+            for (Airport potentialStop : airports.values()) {
+                // Skip if same as current or destination
+                if (potentialStop.getKey() == current.getKey() || potentialStop.getKey() == to.getKey()) {
+                    continue;
+                }
+                
+                // Check fuel compatibility
+                if (!isFuelCompatible(airplane, potentialStop)) {
+                    continue;
+                }
+                
+                double distToStop = calculateDistance(current, potentialStop);
+                double distFromStopToDest = calculateDistance(potentialStop, to);
+                
+                if (distToStop <= maxLegDistance && distFromStopToDest < remainingDistance) {
+                    if (bestStop == null || distToStop > bestDistance) {
+                        bestStop = potentialStop;
+                        bestDistance = distToStop;
+                    }
+                }
+            }
+            
+            if (bestStop == null) {
+                return Collections.emptyList(); // No suitable stop found
+            }
+            
+            refuelStops.add(bestStop);
+            remainingDistance = calculateDistance(bestStop, to);
+            current = bestStop;
+        }
+        
+        return refuelStops;
+    }
+
+    private boolean isFuelCompatible(Airplane airplane, Airport airport) {
+        int planeFuelType = airplane.getFuelType();
+        int airportFuelType = airport.getFuelType();
+        
+        // Fuel type 3 means both types available
+        return (planeFuelType == airportFuelType) || 
+               (airportFuelType == 3) ||
+               (planeFuelType == 1 && airportFuelType == 3) ||
+               (planeFuelType == 2 && airportFuelType == 3);
     }
 
     private Integer getSelectionFromUser(String message, String prompt) {
