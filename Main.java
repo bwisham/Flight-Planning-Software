@@ -238,6 +238,7 @@ class FlightPlannerGUI {
             Airport from = route.get(i);
             Airport to = route.get(i + 1);
             double distance = calculateDistance(from, to);
+            double heading = calculateHeading(from, to);
             double flightTime = distance / airplane.getAirspeed();
             
             totalDistance += distance;
@@ -245,7 +246,8 @@ class FlightPlannerGUI {
             
             legsInfo.append(String.format("Leg %d: %s (%s) to %s (%s)\n", i+1, 
                 from.getName(), from.getIcao(), to.getName(), to.getIcao()));
-            legsInfo.append(String.format("  Distance: %.2f nm | Time: %.2f hours\n\n", distance, flightTime));
+            legsInfo.append(String.format("  Distance: %.2f nm | Time: %.2f hours | Heading: %.1f°\n\n", 
+                distance, flightTime, heading));
         }
 
         double fuelNeeded = totalFlightTime * airplane.getFuelBurn();
@@ -337,6 +339,24 @@ class FlightPlannerGUI {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return 3440.1 * c; // Earth radius in nautical miles
+    }
+
+    private double calculateHeading(Airport from, Airport to) {
+        double lat1 = Math.toRadians(from.getLatitude());
+        double lon1 = Math.toRadians(from.getLongitude());
+        double lat2 = Math.toRadians(to.getLatitude());
+        double lon2 = Math.toRadians(to.getLongitude());
+
+        double dLon = lon2 - lon1;
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - 
+                   Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+        double heading = Math.toDegrees(Math.atan2(y, x));
+        heading = (heading + 360) % 360; // Normalize to 0-360 degrees
+
+        return heading;
     }
 }
 
