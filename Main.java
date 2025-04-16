@@ -1,6 +1,13 @@
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
     public static void main(String[] args) {
@@ -201,15 +208,29 @@ class FlightPlannerGUI {
             summary.append("Flight can be completed without refueling.\n");
             summary.append(String.format("Remaining fuel after flight: %.2f liters%n", airplane.getFuelSize() - fuelNeeded));
         }
-        summary.append("===============================");
-
         // Display summary in scrollable pane
-        JTextArea textArea = new JTextArea(summary.toString());
-        textArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setPreferredSize(new java.awt.Dimension(500, 400));
-        JOptionPane.showMessageDialog(null, scrollPane, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
-
+       // Create a panel with the summary and a "View on Map" button
+       JPanel panel = new JPanel(new BorderLayout());
+        
+       // Add the text summary
+       JTextArea textArea = new JTextArea(summary.toString());
+       textArea.setEditable(false);
+       JScrollPane scrollPane = new JScrollPane(textArea);
+       scrollPane.setPreferredSize(new Dimension(500, 350));
+       panel.add(scrollPane, BorderLayout.CENTER);
+       
+       // Create and add the "View on Map" button
+       JButton mapButton = new JButton("View Flight Plan on OpenStreetMap");
+       mapButton.addActionListener(new ActionListener() {
+           @Override
+           public void actionPerformed(ActionEvent e) {
+               openInBrowser(departureAirport, destinationAirport);
+           }
+       });
+       panel.add(mapButton, BorderLayout.SOUTH);
+       
+       // Display the panel
+       JOptionPane.showMessageDialog(null, panel, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
         // Ask user what to do next
         String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
         int choice = JOptionPane.showOptionDialog(null, 
@@ -227,7 +248,33 @@ class FlightPlannerGUI {
         // Otherwise, create another flight plan
         createFlightPlan(airports, airplanes);
     }
-
+    private void openInBrowser(Airport departure, Airport destination) {
+        try {
+            // Format coordinates for OpenStreetMap URL
+            String url = String.format(
+                "https://www.openstreetmap.org/directions?engine=graphhopper_car&route=%f,%f;%f,%f",
+                departure.getLatitude(),
+                departure.getLongitude(),
+                destination.getLatitude(),
+                destination.getLongitude()
+            );
+            
+            // Open in default browser
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                JOptionPane.showMessageDialog(null, 
+                    "Couldn't open browser automatically. Please visit:\n" + url, 
+                    "OpenStreetMap Link", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (IOException | URISyntaxException e) {
+            JOptionPane.showMessageDialog(null, 
+                "Error opening browser: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
     private Integer getSelectionFromUser(String message, String prompt) {
         JTextArea textArea = new JTextArea(message);
         textArea.setEditable(false);
