@@ -8,7 +8,6 @@
  * deleting airplanes, and displaying the airplane list.
  */
 
-
  import java.io.*;
  import java.util.ArrayList;
  import java.util.Collection;
@@ -25,10 +24,10 @@
          this.planeDbase = new AirplaneDatabase();
          loadAirplanes(); // Load saved data when starting
      }
-
-    public AirplaneManager(AirplaneDatabase planeDbase) {
-        this.planeDbase = planeDbase;
-    }
+ 
+     public AirplaneManager(AirplaneDatabase planeDbase) {
+         this.planeDbase = planeDbase;
+     }
  
      /**
       * Loads airplanes from file
@@ -72,16 +71,16 @@
          try {
              // Validate and get airplane make
              String make = showInputDialogWithValidation(
-                 "Enter airplane make (letters only, max 30 chars):",
-                 "Make must contain only letters and spaces and be ≤30 characters",
-                 input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 30
+                 "Enter airplane make (max 30 chars):",
+                 "Make must be ≤30 characters and cannot be empty",
+                 input -> input != null && !input.trim().isEmpty() && input.length() <= 30
              );
  
              // Validate and get airplane model
              String model = showInputDialogWithValidation(
-                 "Enter airplane model (letters and numbers only, max 30 chars):",
-                 "Model must contain only letters, numbers and spaces and be ≤30 characters",
-                 input -> input != null && input.matches("[A-Za-z0-9 ]+") && input.length() <= 30
+                 "Enter airplane model (max 30 chars):",
+                 "Model must be ≤30 characters and cannot be empty",
+                 input -> input != null && !input.trim().isEmpty() && input.length() <= 30
              );
  
              // Validate and get aircraft type
@@ -205,9 +204,9 @@
  
              // Update make if provided
              String make = showInputDialogWithValidation(
-                 "Enter new make (letters only, max 30 chars, leave blank to keep current):",
-                 "Make must contain only letters and spaces and be ≤30 characters",
-                 input -> input == null || input.isEmpty() || (input.matches("[A-Za-z ]+") && input.length() <= 30)
+                 "Enter new make (max 30 chars, leave blank to keep current):",
+                 "Make must be ≤30 characters",
+                 input -> input == null || input.isEmpty() || input.length() <= 30
              );
              if (make != null && !make.isEmpty()) {
                  airplane.setMake(make);
@@ -215,9 +214,9 @@
  
              // Update model if provided
              String model = showInputDialogWithValidation(
-                 "Enter new model (letters and numbers only, max 30 chars, leave blank to keep current):",
-                 "Model must contain only letters, numbers and spaces and be ≤100 characters",
-                 input -> input == null || input.isEmpty() || (input.matches("[A-Za-z0-9 ]+") && input.length() <= 30)
+                 "Enter new model (max 30 chars, leave blank to keep current):",
+                 "Model must be ≤30 characters",
+                 input -> input == null || input.isEmpty() || input.length() <= 30
              );
              if (model != null && !model.isEmpty()) {
                  airplane.setModel(model);
@@ -370,27 +369,22 @@
       */
      private boolean validateAirplaneData(Airplane airplane) {
          try {
-             // Validate make (letters only, max 30 chars)
+             // Validate make (max 30 chars)
              if (airplane.getMake() == null || airplane.getMake().trim().isEmpty()) {
                  throw new IllegalArgumentException("Make cannot be empty");
-             }
-             if (!airplane.getMake().matches("[A-Za-z ]+")) {
-                 throw new IllegalArgumentException("Make must contain only letters and spaces");
              }
              if (airplane.getMake().length() > 30) {
                  throw new IllegalArgumentException("Make cannot exceed 30 characters");
              }
  
-             // Validate model (letters only, max 30 chars)
+             // Validate model (max 30 chars)
              if (airplane.getModel() == null || airplane.getModel().trim().isEmpty()) {
                  throw new IllegalArgumentException("Model cannot be empty");
-             }
-             if (!airplane.getModel().matches("[A-Za-z0-9 ]+")) {
-                 throw new IllegalArgumentException("Model must contain only letters, numbers and spaces");
              }
              if (airplane.getModel().length() > 30) {
                  throw new IllegalArgumentException("Model cannot exceed 30 characters");
              }
+ 
              if (airplane.getAircraftType() == null || airplane.getAircraftType().trim().isEmpty()) {
                  throw new IllegalArgumentException("Aircraft type must be selected");
              }
