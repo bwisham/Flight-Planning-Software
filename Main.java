@@ -1,6 +1,8 @@
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.awt.Desktop;
+import java.net.URI;
 
 public class Main {
     public static void main(String[] args) {
@@ -83,13 +85,8 @@ public class Main {
 class FlightPlannerGUI {
     private static final String DISCLAIMER = 
         "DISCLAIMER:\n\n" +
-        "This flight planning tool is for RECREATIONAL USE ONLY.\n" +
-        "It should NOT be used for actual flight planning.\n\n" +
-        "Always consult official aviation resources and professionals\n" +
-        "for real-world flight planning.\n\n" +
-        "By using this tool, you acknowledge that it provides\n" +
-        "approximations only and should not be relied upon\n" +
-        "for actual flight operations.";
+        "THIS SOFTWARE IS NOT TO BE USED FOR FLIGHT PLANNING OR NAVIGATIONAL PURPOSES\n";
+        
 
     public void showMainMenu(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
         while (true) {
@@ -357,7 +354,14 @@ class FlightPlannerGUI {
         JOptionPane.showMessageDialog(null, scrollPane, "Flight Plan Summary", JOptionPane.INFORMATION_MESSAGE);
 
         // Ask user what to do next
-        String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
+         // Create buttons
+         String[] options;
+         if (flightPossible) {
+             options = new String[]{"View on Map", "Create Another Flight Plan", "Return to Main Menu"};
+         } else {
+             options = new String[]{"Create Another Flight Plan", "Return to Main Menu"};
+         }
+        //String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
         int choice = JOptionPane.showOptionDialog(null, 
             "Flight plan completed. What would you like to do next?",
             "Flight Plan Complete",
@@ -367,12 +371,66 @@ class FlightPlannerGUI {
             options,
             options[0]);
         
-        if (choice == 1) {
-            return; // Return to main menu
+            if (choice == 0 && flightPossible) {
+                // User clicked "View on Map"
+                showFlightPlanOnOSM(routeWithRefuel);
+                // Show the options again after viewing the map
+                showPostPlanOptions(airports, airplanes);
+            } else if ((choice == 1 && flightPossible) || (choice == 0 && !flightPossible)) {
+                // Create another flight plan
+                createFlightPlan(airports, airplanes);
+            } else {
+                // Return to main menu
+                return;
+            }// Return to main menu
         }
         // Otherwise, create another flight plan
-        createFlightPlan(airports, airplanes);
-    }
+        //createFlightPlan(airports, airplanes);
+        private void showPostPlanOptions(Map<Integer, Airport> airports, Map<Integer, Airplane> airplanes) {
+            String[] options = {"Create Another Flight Plan", "Return to Main Menu"};
+            int choice = JOptionPane.showOptionDialog(null,
+                    "What would you like to do next?",
+                    "Flight Plan Complete",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+    
+            if (choice == 0) {
+                createFlightPlan(airports, airplanes);
+            }
+        }
+    
+        private void showFlightPlanOnOSM(List<Airport> route) {
+            if (route == null || route.isEmpty()) {
+                return;
+            }
+    
+            try {
+                // Build the OpenStreetMap URL with the flight path
+                StringBuilder urlBuilder = new StringBuilder("https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=");
+                
+                // Add all airports in the route
+                for (Airport airport : route) {
+                    urlBuilder.append(airport.getLatitude())
+                             .append(",")
+                             .append(airport.getLongitude())
+                             .append(";");
+                }
+                
+                // Remove the trailing semicolon
+                String url = urlBuilder.substring(0, urlBuilder.length() - 1);
+                
+                // Open in default browser
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, 
+                    "Could not open map in browser: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
 
     private List<Airport> findRefuelStops(Airport from, Airport to, Map<Integer, Airport> airports, 
                                         Airplane airplane, double maxLegDistance) {
