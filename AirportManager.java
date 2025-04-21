@@ -13,7 +13,7 @@ public class AirportManager {
     public void addAirport() {
         try {
             String name = showInputDialogWithValidation(
-                "Enter the name of the airport:",
+                "Enter the name of the airport (max 40 chars):",
                 "Airport name cannot be empty and must be less than 40 characters.",
                 input -> input != null && !input.trim().isEmpty() && input.length() <= 40
             );
@@ -23,7 +23,7 @@ public class AirportManager {
             }
 
             String icao = showInputDialogWithValidation(
-                "Enter the ICAO Identifier of the airport (4 characters):",
+                "Enter the ICAO Identifier of the airport (exactly 4 characters):",
                 "ICAO must be exactly 4 characters.",
                 input -> input != null && input.length() == 4
             ).toUpperCase();
@@ -53,13 +53,14 @@ public class AirportManager {
             }
 
             int fuelType = showNumericInputDialogWithValidation(
-                "Enter the fuel types the airport supports (1-3). 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
+                "Enter the fuel types the airport supports:\n" +
+                "1 = AVGAS\n2 = JA-1 / JP-8\n3 = Both",
                 "Invalid fuel type. Must be between 1 and 3.",
                 1, 3
             );
 
             String radioType = showInputDialogWithValidation(
-                "Enter the radio type (e.g., VHF, UHF, HF):",
+                "Enter the radio type (e.g., VHF, UHF, HF) (max 20 chars):",
                 "Radio type cannot be empty and must be less than 20 characters.",
                 input -> input != null && !input.trim().isEmpty() && input.length() <= 20
             );
@@ -148,9 +149,11 @@ public class AirportManager {
 
             JOptionPane.showMessageDialog(null, "Current airport details:\n" + airport);
 
+            // Update name if provided
             String name = showInputDialogWithValidation(
-                "Enter new name (leave blank to keep current):",
-                "Airport name cannot be empty and must be less than 40 characters.",
+                "Enter new name (max 40 chars, leave blank to keep current):\n" +
+                "Current: " + airport.getName(),
+                "Airport name must be ≤40 characters",
                 input -> input.isEmpty() || (!input.trim().isEmpty() && input.length() <= 40)
             );
             if (!name.isEmpty()) {
@@ -162,8 +165,10 @@ public class AirportManager {
                 }
             }
 
+            // Update ICAO if provided
             String icao = showInputDialogWithValidation(
-                "Enter new ICAO (leave blank to keep current):",
+                "Enter new ICAO (exactly 4 chars, leave blank to keep current):\n" +
+                "Current: " + airport.getIcao(),
                 "ICAO must be exactly 4 characters",
                 input -> input.isEmpty() || input.length() == 4
             );
@@ -177,8 +182,10 @@ public class AirportManager {
                 }
             }
 
+            // Update latitude if provided
             Double latitude = showNumericInputDialogWithValidation(
-                "Enter new latitude (or 0 to keep current):",
+                "Enter new latitude (-90 to 90, or 0 to keep current):\n" +
+                "Current: " + airport.getLatitude(),
                 "Invalid latitude. Must be between -90 and 90.",
                 -90.0, 90.0,
                 true
@@ -191,8 +198,10 @@ public class AirportManager {
                 airport.setLatitude(latitude);
             }
 
+            // Update longitude if provided
             Double longitude = showNumericInputDialogWithValidation(
-                "Enter new longitude (or 0 to keep current):",
+                "Enter new longitude (-180 to 180, or 0 to keep current):\n" +
+                "Current: " + airport.getLongitude(),
                 "Invalid longitude. Must be between -180 and 180.",
                 -180.0, 180.0,
                 true
@@ -205,8 +214,11 @@ public class AirportManager {
                 airport.setLongitude(longitude);
             }
 
+            // Update fuel type if provided
             Integer fuelType = showIntegerInputDialogWithValidation(
-                "Enter new fuel type (or 0 to keep current, 1-3) 1=AVGAS, 2=JA-1 / JP-8, 3 = Both.:",
+                "Enter new fuel type (or 0 to keep current):\n" +
+                "Current: " + getFuelTypeDescription(airport.getFuelType()) + "\n" +
+                "1 = AVGAS\n2 = JA-1 / JP-8\n3 = Both",
                 "Invalid fuel type. Must be between 1 and 3.",
                 1, 3,
                 true
@@ -215,17 +227,21 @@ public class AirportManager {
                 airport.setFuelType(fuelType);
             }
 
+            // Update radio type if provided
             String radioType = showInputDialogWithValidation(
-                "Enter new radio type (leave blank to keep current):",
-                "Radio type must be less than 20 characters.",
+                "Enter new radio type (max 20 chars, leave blank to keep current):\n" +
+                "Current: " + airport.getRadioType(),
+                "Radio type must be ≤20 characters",
                 input -> input.isEmpty() || input.length() <= 20
             );
             if (!radioType.isEmpty()) {
                 airport.setRadioType(radioType);
             }
 
+            // Update radio frequency if provided
             Double radioFrequency = showNumericInputDialogWithValidation(
-                "Enter new radio frequency (or 0 to keep current, 118.00-136.975):",
+                "Enter new radio frequency (or 0 to keep current):\n" +
+                "Current: " + airport.getRadioFrequency(),
                 "Invalid radio frequency. Must be positive.",
                 0.1, Double.MAX_VALUE,
                 true
@@ -245,6 +261,15 @@ public class AirportManager {
             showErrorDialog("Modification Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "An unexpected error occurred while modifying airport: " + e.getMessage());
+        }
+    }
+
+    private String getFuelTypeDescription(int fuelType) {
+        switch (fuelType) {
+            case 1: return "AVGAS";
+            case 2: return "JA-1 / JP-8";
+            case 3: return "Both";
+            default: return "Unknown";
         }
     }
 
@@ -329,8 +354,17 @@ public class AirportManager {
             if (airport.getLongitude() < -180 || airport.getLongitude() > 180) {
                 throw new IllegalArgumentException("Longitude must be between -180 and 180");
             }
-            if (airport.getFuelType() < 1 || airport.getFuelType() > 5) {
-                throw new IllegalArgumentException("Fuel type must be between 1 and 5");
+            if (airport.getFuelType() < 1 || airport.getFuelType() > 3) {
+                throw new IllegalArgumentException("Fuel type must be between 1 and 3");
+            }
+            if (airport.getRadioType() == null || airport.getRadioType().trim().isEmpty()) {
+                throw new IllegalArgumentException("Radio type cannot be empty");
+            }
+            if (airport.getRadioType().length() > 20) {
+                throw new IllegalArgumentException("Radio type cannot exceed 20 characters");
+            }
+            if (airport.getRadioFrequency() <= 0) {
+                throw new IllegalArgumentException("Radio frequency must be positive");
             }
             return true;
         } catch (IllegalArgumentException e) {

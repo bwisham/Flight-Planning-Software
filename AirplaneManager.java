@@ -204,7 +204,8 @@
  
              // Update make if provided
              String make = showInputDialogWithValidation(
-                 "Enter new make (max 30 chars, leave blank to keep current):",
+                 "Enter new make (max 30 chars, leave blank to keep current):\n" +
+                 "Current: " + airplane.getMake(),
                  "Make must be ≤30 characters",
                  input -> input == null || input.isEmpty() || input.length() <= 30
              );
@@ -214,7 +215,8 @@
  
              // Update model if provided
              String model = showInputDialogWithValidation(
-                 "Enter new model (max 30 chars, leave blank to keep current):",
+                 "Enter new model (max 30 chars, leave blank to keep current):\n" +
+                 "Current: " + airplane.getModel(),
                  "Model must be ≤30 characters",
                  input -> input == null || input.isEmpty() || input.length() <= 30
              );
@@ -224,8 +226,10 @@
  
              // Update aircraft type if provided
              String aircraftType = showInputDialogWithValidation(
-                 "Enter aircraft type (leave blank to keep current):",
-                 "Aircraft type cannot be empty and can be no longer than 10 characters. You also must make sure to only use letters too.:",
+                 "Enter aircraft type (leave blank to keep current):\n" +
+                 "Requirements: Letters only, max 10 characters\n" +
+                 "Current: " + airplane.getAircraftType(),
+                 "Aircraft type must be letters only and ≤10 characters",
                  input -> input == null || input.isEmpty() || (input.matches("[A-Za-z ]+") && input.length() <= 10)
              );
              if (aircraftType != null && !aircraftType.isEmpty()) {
@@ -234,7 +238,9 @@
  
              // Update fuel size if provided
              Double fuelSize = showNumericInputDialogWithValidation(
-                 "Enter new fuel tank size in liters (or 0 to keep current):",
+                 "Enter new fuel tank size in liters (or 0 to keep current):\n" +
+                 "Requirements: Must be positive\n" +
+                 "Current: " + airplane.getFuelSize(),
                  "Invalid fuel size. Must be positive.",
                  0.1, Double.MAX_VALUE,
                  true
@@ -245,7 +251,8 @@
  
              // Update fuel type if provided (1 for Aviation, 2 for Jet)
              Integer fuelType = showNumericInputDialogWithValidation(
-                 "Enter new fuel type (1 for Aviation fuel, 2 for Jet fuel, or 0 to keep current):",
+                 "Enter new fuel type (1 for Aviation fuel, 2 for Jet fuel, or 0 to keep current):\n" +
+                 "Current: " + (airplane.getFuelType() == 1 ? "Aviation fuel" : "Jet fuel"),
                  "Invalid fuel type. Must be 1 or 2.",
                  1, 2,
                  true
@@ -256,7 +263,9 @@
  
              // Update fuel burn rate if provided
              Double fuelBurn = showNumericInputDialogWithValidation(
-                 "Enter new fuel burn rate (or 0 to keep current):",
+                 "Enter new fuel burn rate (or 0 to keep current):\n" +
+                 "Requirements: Must be positive\n" +
+                 "Current: " + airplane.getFuelBurn(),
                  "Invalid fuel burn rate. Must be positive.",
                  0.1, Double.MAX_VALUE,
                  true
@@ -267,7 +276,9 @@
  
              // Update airspeed if provided
              Integer airspeed = showNumericInputDialogWithValidation(
-                 "Enter new cruising airspeed (or 0 to keep current, 50-1000 knots):",
+                 "Enter new cruising airspeed (or 0 to keep current):\n" +
+                 "Requirements: 50-1000 knots\n" +
+                 "Current: " + airplane.getAirspeed(),
                  "Invalid airspeed. Must be between 50 and 1000 knots.",
                  50, 1000,
                  true
