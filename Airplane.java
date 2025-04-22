@@ -4,23 +4,32 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Airplane implements Serializable {
+    // Serialization version ID for compatibility
     public static final long serialVersionUID = 1L;
-    public String make;
-    public String model;
-    public String aircraftType;
-    public double fuelSize;
-    public double fuelBurn;
-    public int airspeed;
-    public transient Scanner scanner;
-    public boolean dataSet = false;
-    public static  String DB_FILE = "Airplanedb1.dat";
-    public static  AirplaneDatabase airplaneDB = loadDatabase();
+    
+    // Airplane attributes
+    public String make;             // Manufacturer of the airplane
+    public String model;            // Model name/number
+    public String aircraftType;     // Type: prop, turboprop, or jet
+    public double fuelSize;         // Total fuel capacity in liters
+    public double fuelBurn;         // Fuel consumption rate in liters/hour
+    public int airspeed;            // Cruising speed in knots
+    
+    // Transient fields (not serialized)
+    public transient Scanner scanner;  // Scanner for user input
+    public boolean dataSet = false;    // Flag to track if data has been entered
+    
+    // Database configuration
+    public static String DB_FILE = "Airplanedb1.dat";       // Database filename
+    public static AirplaneDatabase airplaneDB = loadDatabase();  // Database instance
 
+    // Default constructor
     public Airplane() {
         this.scanner = new Scanner(System.in);
         resetFields();
     }
 
+    // Resets all fields to default values
     public void resetFields() {
         this.make = "";
         this.model = "";
@@ -31,11 +40,13 @@ public class Airplane implements Serializable {
         this.dataSet = false;
     }
 
+    // Custom deserialization to reinitialize transient fields
     public void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         this.scanner = new Scanner(System.in);
     }
 
+    // Loads airplane database from file or creates new if none exists
     public static AirplaneDatabase loadDatabase() {
         File dbFile = new File(DB_FILE);
         System.out.println("Database file location: " + dbFile.getAbsolutePath());
@@ -53,6 +64,7 @@ public class Airplane implements Serializable {
         }
     }
 
+    // Saves current database to file
     public static void saveDatabase() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DB_FILE))) {
             oos.writeObject(airplaneDB);
@@ -62,6 +74,7 @@ public class Airplane implements Serializable {
         }
     }
 
+    // Setter methods with user input prompts
     public void setMake() {
         System.out.print("Enter airplane make: ");
         this.make = scanner.nextLine();
@@ -114,6 +127,7 @@ public class Airplane implements Serializable {
         scanner.nextLine();
     }
 
+    // Displays current airplane information
     public void print() {
         if (!dataSet) {
             System.out.println("\nERROR: No airplane data has been set yet!");
@@ -133,6 +147,7 @@ public class Airplane implements Serializable {
         waitForEnter();
     }
 
+    // Allows modification of existing airplane data
     public void modify() {
         if (!dataSet) {
             System.out.println("\nERROR: Cannot modify - no airplane data has been set yet!");
@@ -199,6 +214,7 @@ public class Airplane implements Serializable {
         waitForEnter();
     }
 
+    // Saves current airplane to database
     public void saveToDatabase() {
         if (!dataSet) {
             System.out.println("\nERROR: Cannot save - no airplane data has been set yet!");
@@ -223,6 +239,7 @@ public class Airplane implements Serializable {
         resetFields();
     }
 
+    // Lists all airplanes in database in formatted table
     public static void listAllAirplanes() {
         List<Airplane> airplanes = airplaneDB.getAllAirplanes();
         if (airplanes.isEmpty()) {
@@ -253,6 +270,7 @@ public class Airplane implements Serializable {
         waitForEnter();
     }
 
+    // Modifies existing airplane in database
     public static void modifyDatabaseAirplane() {
         List<Airplane> airplanes = airplaneDB.getAllAirplanes();
         if (airplanes.isEmpty()) {
@@ -294,6 +312,7 @@ public class Airplane implements Serializable {
         }
     }
 
+    // Removes airplane from database with confirmation
     public static void removeFromDatabase() {
         List<Airplane> airplanes = airplaneDB.getAllAirplanes();
         if (airplanes.isEmpty()) {
@@ -364,6 +383,7 @@ public class Airplane implements Serializable {
         waitForEnter();
     }
 
+    // Utility method to wait for user to press Enter
     public static void waitForEnter() {
         System.out.print("Press enter to continue...");
         try {
@@ -373,6 +393,7 @@ public class Airplane implements Serializable {
         }
     }
 
+    // Main program entry point
     public static void main(String[] args) {
         try (Scanner menuScanner = new Scanner(System.in)) {
             Airplane airplane = new Airplane();
@@ -422,6 +443,7 @@ public class Airplane implements Serializable {
     }
 }
 
+// Database class for storing airplane objects
 class AirplaneDatabase implements Serializable {
     public static long serialVersionUID = 1L;
     public List<Airplane> airplanes;
