@@ -33,8 +33,8 @@ public class AirportManager {
             // Validate and collect airport name
             String name = showInputDialogWithValidation(
                 "Enter the name of the airport (max 40 chars):",
-                "Airport name cannot be empty and must be less than 40 characters.",
-                input -> input != null && !input.trim().isEmpty() && input.length() <= 40
+                "Airport name cannot exceed 40 characters",
+                input -> input != null && input.length() <= 40
             );
 
             // Check for duplicate airport names
@@ -45,7 +45,7 @@ public class AirportManager {
             // Validate and collect ICAO code
             String icao = showInputDialogWithValidation(
                 "Enter the ICAO Identifier of the airport (exactly 4 characters):",
-                "ICAO must be exactly 4 characters.",
+                "ICAO must be exactly 4 characters",
                 input -> input != null && input.length() == 4
             ).toUpperCase();
 
@@ -57,7 +57,7 @@ public class AirportManager {
             // Validate and collect latitude
             double latitude = showNumericInputDialogWithValidation(
                 "Enter the latitude of the airport (-90 to 90):",
-                "Invalid latitude. Must be between -90 and 90.",
+                "Latitude must be between -90 and 90",
                 -90.0, 90.0,
                 false
             ).doubleValue();
@@ -65,7 +65,7 @@ public class AirportManager {
             // Validate and collect longitude
             double longitude = showNumericInputDialogWithValidation(
                 "Enter the longitude of the airport (-180 to 180):",
-                "Invalid longitude. Must be between -180 and 180.",
+                "Longitude must be between -180 and 180",
                 -180.0, 180.0,
                 false
             ).doubleValue();
@@ -76,18 +76,19 @@ public class AirportManager {
             }
 
             // Validate and collect fuel type
-            int fuelType = showNumericInputDialogWithValidation(
+            int fuelType = showIntegerInputDialogWithValidation(
                 "Enter the fuel types the airport supports:\n" +
                 "1 = AVGAS\n2 = JA-1 / JP-8\n3 = Both",
-                "Invalid fuel type. Must be between 1 and 3.",
-                1, 3
+                "Fuel type must be 1, 2, or 3",
+                1, 3,
+                false
             );
 
             // Validate and collect radio type (restricted to UHF, VHF, or HF)
             String radioType = showInputDialogWithValidation(
                 "Enter the radio type (must be UHF, VHF, or HF):",
-                "Radio type must be exactly UHF, VHF, or HF (case insensitive).",
-                input -> input != null && !input.trim().isEmpty() && 
+                "Radio type must be UHF, VHF, or HF",
+                input -> input != null && 
                         (input.equalsIgnoreCase("UHF") || 
                          input.equalsIgnoreCase("VHF") || 
                          input.equalsIgnoreCase("HF"))
@@ -98,21 +99,21 @@ public class AirportManager {
             if (radioType.equalsIgnoreCase("VHF")) {
                 radioFrequency = showNumericInputDialogWithValidation(
                     "Enter the VHF radio frequency (118.0 to 136.975):",
-                    "Invalid VHF frequency. Must be between 118.0 and 136.975.",
+                    "VHF frequency must be between 118.0 and 136.975 MHz",
                     118.0, 136.975,
                     false
                 ).doubleValue();
             } else if (radioType.equalsIgnoreCase("UHF")) {
                 radioFrequency = showNumericInputDialogWithValidation(
                     "Enter the UHF radio frequency (225 to 399.95):",
-                    "Invalid UHF frequency. Must be between 225 and 399.95.",
+                    "UHF frequency must be between 225 and 399.95 MHz",
                     225.0, 399.95,
                     false
                 ).doubleValue();
             } else { // HF
                 radioFrequency = showNumericInputDialogWithValidation(
                     "Enter the HF radio frequency (2 to 30):",
-                    "Invalid HF frequency. Must be between 2 and 30.",
+                    "HF frequency must be between 2 and 30 MHz",
                     2.0, 30.0,
                     false
                 ).doubleValue();
@@ -165,7 +166,7 @@ public class AirportManager {
             // Get search term based on selected option
             String searchTerm = showInputDialogWithValidation(
                 choice == 0 ? "Enter airport name:" : "Enter ICAO identifier (4 characters):",
-                "Search term cannot be empty",
+                choice == 0 ? "Airport name cannot be blank" : "ICAO code must be 4 characters",
                 input -> input != null && !input.trim().isEmpty()
             );
 
@@ -555,31 +556,51 @@ public class AirportManager {
     }
 
     /**
-     * Validates airport data against business rules
+     * Validates airport data against business rules with specific error messages
      * @param airport The airport to validate
      * @return true if valid, false otherwise
      */
     private boolean validateAirportData(Airport airport) {
         try {
-            // Validate all fields against requirements
+            // Validate name
             if (airport.getName() == null || airport.getName().trim().isEmpty()) {
                 throw new IllegalArgumentException("Airport name cannot be empty");
             }
             if (airport.getName().length() > 40) {
-                throw new IllegalArgumentException("Name cannot exceed 40 characters");
+                throw new IllegalArgumentException("Airport name cannot exceed 40 characters");
             }
-            if (airport.getIcao() == null || airport.getIcao().length() != 4) {
+            
+            // Validate ICAO
+            if (airport.getIcao() == null) {
+                throw new IllegalArgumentException("ICAO code cannot be null");
+            }
+            if (airport.getIcao().length() != 4) {
                 throw new IllegalArgumentException("ICAO code must be exactly 4 characters");
             }
-            if (airport.getLatitude() < -90 || airport.getLatitude() > 90) {
-                throw new IllegalArgumentException("Latitude must be between -90 and 90");
+            
+            // Validate coordinates
+            if (airport.getLatitude() < -90) {
+                throw new IllegalArgumentException("Latitude must be -90 or higher");
             }
-            if (airport.getLongitude() < -180 || airport.getLongitude() > 180) {
-                throw new IllegalArgumentException("Longitude must be between -180 and 180");
+            if (airport.getLatitude() > 90) {
+                throw new IllegalArgumentException("Latitude must be 90 or lower");
             }
-            if (airport.getFuelType() < 1 || airport.getFuelType() > 3) {
-                throw new IllegalArgumentException("Fuel type must be between 1 and 3");
+            if (airport.getLongitude() < -180) {
+                throw new IllegalArgumentException("Longitude must be -180 or higher");
             }
+            if (airport.getLongitude() > 180) {
+                throw new IllegalArgumentException("Longitude must be 180 or lower");
+            }
+            
+            // Validate fuel type
+            if (airport.getFuelType() < 1) {
+                throw new IllegalArgumentException("Fuel type must be 1 or higher");
+            }
+            if (airport.getFuelType() > 3) {
+                throw new IllegalArgumentException("Fuel type must be 3 or lower");
+            }
+            
+            // Validate radio type
             if (airport.getRadioType() == null || airport.getRadioType().trim().isEmpty()) {
                 throw new IllegalArgumentException("Radio type cannot be empty");
             }
@@ -588,22 +609,33 @@ public class AirportManager {
                 !airport.getRadioType().equalsIgnoreCase("HF")) {
                 throw new IllegalArgumentException("Radio type must be UHF, VHF, or HF");
             }
+            
+            // Validate radio frequency
             if (airport.getRadioFrequency() <= 0) {
                 throw new IllegalArgumentException("Radio frequency must be positive");
             }
             
-            // Add frequency range validation based on radio type
+            // Validate frequency ranges based on radio type
             if (airport.getRadioType().equalsIgnoreCase("VHF")) {
-                if (airport.getRadioFrequency() < 118.0 || airport.getRadioFrequency() > 136.975) {
-                    throw new IllegalArgumentException("VHF frequency must be between 118.0 and 136.975");
+                if (airport.getRadioFrequency() < 118.0) {
+                    throw new IllegalArgumentException("VHF frequency must be 118.0 MHz or higher");
+                }
+                if (airport.getRadioFrequency() > 136.975) {
+                    throw new IllegalArgumentException("VHF frequency must be 136.975 MHz or lower");
                 }
             } else if (airport.getRadioType().equalsIgnoreCase("UHF")) {
-                if (airport.getRadioFrequency() < 225 || airport.getRadioFrequency() > 399.95) {
-                    throw new IllegalArgumentException("UHF frequency must be between 225 and 399.95");
+                if (airport.getRadioFrequency() < 225) {
+                    throw new IllegalArgumentException("UHF frequency must be 225 MHz or higher");
+                }
+                if (airport.getRadioFrequency() > 399.95) {
+                    throw new IllegalArgumentException("UHF frequency must be 399.95 MHz or lower");
                 }
             } else if (airport.getRadioType().equalsIgnoreCase("HF")) {
-                if (airport.getRadioFrequency() < 2 || airport.getRadioFrequency() > 30) {
-                    throw new IllegalArgumentException("HF frequency must be between 2 and 30");
+                if (airport.getRadioFrequency() < 2) {
+                    throw new IllegalArgumentException("HF frequency must be 2 MHz or higher");
+                }
+                if (airport.getRadioFrequency() > 30) {
+                    throw new IllegalArgumentException("HF frequency must be 30 MHz or lower");
                 }
             }
             
@@ -614,33 +646,34 @@ public class AirportManager {
         }
     }
 
-    // Helper methods for input validation and dialog display
-
     /**
-     * Shows input dialog with validation
-     * @param message Prompt to display
-     * @param errorMessage Error to show on validation failure
-     * @param validator Validation predicate
-     * @return Validated user input
+     * Shows input dialog with validation and specific error messages
      */
     private String showInputDialogWithValidation(String message, String errorMessage, 
             java.util.function.Predicate<String> validator) {
         while (true) {
             String input = JOptionPane.showInputDialog(message);
             if (input == null) {
-                throw new IllegalArgumentException("Operation cancelled");
+                throw new IllegalArgumentException("Operation cancelled by user");
             }
-            if (validator.test(input)) {
-                return input.trim();
+            input = input.trim();
+            
+            if (input.isEmpty()) {
+                showErrorDialog("Invalid Input", "Field cannot be blank");
+                continue;
             }
-            if (errorMessage != null) {
+            
+            if (!validator.test(input)) {
                 showErrorDialog("Invalid Input", errorMessage);
+                continue;
             }
+            
+            return input;
         }
     }
 
     /**
-     * Shows numeric input dialog with validation (double version with optional empty input)
+     * Shows numeric input dialog with validation and specific error messages
      */
     private Double showNumericInputDialogWithValidation(String message, String errorMessage, 
             double min, double max, boolean allowEmpty) {
@@ -648,16 +681,31 @@ public class AirportManager {
             try {
                 String input = JOptionPane.showInputDialog(message);
                 if (input == null) {
-                    throw new IllegalArgumentException("Operation cancelled");
+                    throw new IllegalArgumentException("Operation cancelled by user");
                 }
+                
                 if (allowEmpty && input.trim().isEmpty()) {
                     return null;
                 }
-                double value = Double.parseDouble(input);
-                if (value >= min && value <= max) {
-                    return value;
+                
+                if (input.trim().isEmpty()) {
+                    showErrorDialog("Invalid Input", "Field cannot be blank");
+                    continue;
                 }
-                showErrorDialog("Invalid Input", errorMessage);
+                
+                double value = Double.parseDouble(input);
+                
+                if (value < min) {
+                    showErrorDialog("Invalid Input", "Value must be at least " + min);
+                    continue;
+                }
+                
+                if (value > max) {
+                    showErrorDialog("Invalid Input", "Value must be at most " + max);
+                    continue;
+                }
+                
+                return value;
             } catch (NumberFormatException e) {
                 showErrorDialog("Invalid Input", "Please enter a valid number");
             }
@@ -665,7 +713,7 @@ public class AirportManager {
     }
 
     /**
-     * Shows integer input dialog with validation (with optional empty input)
+     * Shows integer input dialog with validation and specific error messages
      */
     private Integer showIntegerInputDialogWithValidation(String message, String errorMessage, 
             int min, int max, boolean allowEmpty) {
@@ -673,39 +721,33 @@ public class AirportManager {
             try {
                 String input = JOptionPane.showInputDialog(message);
                 if (input == null) {
-                    throw new IllegalArgumentException("Operation cancelled");
+                    throw new IllegalArgumentException("Operation cancelled by user");
                 }
+                
                 if (allowEmpty && input.trim().isEmpty()) {
                     return null;
                 }
+                
+                if (input.trim().isEmpty()) {
+                    showErrorDialog("Invalid Input", "Field cannot be blank");
+                    continue;
+                }
+                
                 int value = Integer.parseInt(input);
-                if (value >= min && value <= max) {
-                    return value;
+                
+                if (value < min) {
+                    showErrorDialog("Invalid Input", "Value must be at least " + min);
+                    continue;
                 }
-                showErrorDialog("Invalid Input", errorMessage);
+                
+                if (value > max) {
+                    showErrorDialog("Invalid Input", "Value must be at most " + max);
+                    continue;
+                }
+                
+                return value;
             } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid integer");
-            }
-        }
-    }
-
-    /**
-     * Shows numeric input dialog with validation (integer version)
-     */
-    public int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
-        while (true) {
-            try {
-                String input = JOptionPane.showInputDialog(message);
-                if (input == null) {
-                    throw new IllegalArgumentException("Operation cancelled");
-                }
-                int value = Integer.parseInt(input);
-                if (value >= min && value <= max) {
-                    return value;
-                }
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid number");
+                showErrorDialog("Invalid Input", "Please enter a whole number");
             }
         }
     }
