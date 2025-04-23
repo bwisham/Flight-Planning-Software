@@ -83,20 +83,40 @@ public class AirportManager {
                 1, 3
             );
 
-            // Validate and collect radio type
+            // Validate and collect radio type (restricted to UHF, VHF, or HF)
             String radioType = showInputDialogWithValidation(
-                "Enter the radio type (e.g., VHF, UHF, HF) (max 20 chars):",
-                "Radio type cannot be empty and must be less than 20 characters.",
-                input -> input != null && !input.trim().isEmpty() && input.length() <= 20
-            );
+                "Enter the radio type (must be UHF, VHF, or HF):",
+                "Radio type must be exactly UHF, VHF, or HF (case insensitive).",
+                input -> input != null && !input.trim().isEmpty() && 
+                        (input.equalsIgnoreCase("UHF") || 
+                         input.equalsIgnoreCase("VHF") || 
+                         input.equalsIgnoreCase("HF"))
+            ).toUpperCase();
 
-            // Validate and collect radio frequency
-            double radioFrequency = showNumericInputDialogWithValidation(
-                "Enter the radio frequency (e.g., 118.00 - 136.975 for VHF):",
-                "Invalid radio frequency. Must be positive.",
-                0.1, Double.MAX_VALUE,
-                false
-            ).doubleValue();
+            // Validate and collect radio frequency based on radio type
+            double radioFrequency;
+            if (radioType.equalsIgnoreCase("VHF")) {
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter the VHF radio frequency (118.0 to 136.975):",
+                    "Invalid VHF frequency. Must be between 118.0 and 136.975.",
+                    118.0, 136.975,
+                    false
+                ).doubleValue();
+            } else if (radioType.equalsIgnoreCase("UHF")) {
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter the UHF radio frequency (225 to 399.95):",
+                    "Invalid UHF frequency. Must be between 225 and 399.95.",
+                    225.0, 399.95,
+                    false
+                ).doubleValue();
+            } else { // HF
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter the HF radio frequency (2 to 30):",
+                    "Invalid HF frequency. Must be between 2 and 30.",
+                    2.0, 30.0,
+                    false
+                ).doubleValue();
+            }
 
             // Create new airport record
             int key = portDbase.getNextKey();
@@ -328,25 +348,47 @@ public class AirportManager {
                 airport.setFuelType(fuelType);
             }
 
-            // Update radio type if provided
+            // Update radio type if provided (restricted to UHF, VHF, or HF)
             String radioType = showInputDialogWithValidation(
-                "Enter new radio type (max 20 chars, leave blank to keep current):\n" +
+                "Enter new radio type (must be UHF, VHF, or HF, leave blank to keep current):\n" +
                 "Current: " + airport.getRadioType(),
-                "Radio type must be ≤20 characters",
-                input -> input.isEmpty() || input.length() <= 20
+                "Radio type must be exactly UHF, VHF, or HF (case insensitive).",
+                input -> input.isEmpty() || 
+                        (input.equalsIgnoreCase("UHF") || 
+                         input.equalsIgnoreCase("VHF") || 
+                         input.equalsIgnoreCase("HF"))
             );
             if (!radioType.isEmpty()) {
-                airport.setRadioType(radioType);
+                airport.setRadioType(radioType.toUpperCase());
             }
 
             // Update radio frequency if provided
-            Double radioFrequency = showNumericInputDialogWithValidation(
-                "Enter new radio frequency (or 0 to keep current):\n" +
-                "Current: " + airport.getRadioFrequency(),
-                "Invalid radio frequency. Must be positive.",
-                0.1, Double.MAX_VALUE,
-                true
-            );
+            Double radioFrequency = null;
+            if (airport.getRadioType().equalsIgnoreCase("VHF")) {
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter new VHF radio frequency (118.0 to 136.975, or 0 to keep current):\n" +
+                    "Current: " + airport.getRadioFrequency(),
+                    "Invalid VHF frequency. Must be between 118.0 and 136.975.",
+                    118.0, 136.975,
+                    true
+                );
+            } else if (airport.getRadioType().equalsIgnoreCase("UHF")) {
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter new UHF radio frequency (225 to 399.95, or 0 to keep current):\n" +
+                    "Current: " + airport.getRadioFrequency(),
+                    "Invalid UHF frequency. Must be between 225 and 399.95.",
+                    225.0, 399.95,
+                    true
+                );
+            } else { // HF
+                radioFrequency = showNumericInputDialogWithValidation(
+                    "Enter new HF radio frequency (2 to 30, or 0 to keep current):\n" +
+                    "Current: " + airport.getRadioFrequency(),
+                    "Invalid HF frequency. Must be between 2 and 30.",
+                    2.0, 30.0,
+                    true
+                );
+            }
             if (radioFrequency != null && radioFrequency != 0) {
                 airport.setRadioFrequency(radioFrequency);
             }
@@ -541,12 +583,30 @@ public class AirportManager {
             if (airport.getRadioType() == null || airport.getRadioType().trim().isEmpty()) {
                 throw new IllegalArgumentException("Radio type cannot be empty");
             }
-            if (airport.getRadioType().length() > 20) {
-                throw new IllegalArgumentException("Radio type cannot exceed 20 characters");
+            if (!airport.getRadioType().equalsIgnoreCase("UHF") && 
+                !airport.getRadioType().equalsIgnoreCase("VHF") && 
+                !airport.getRadioType().equalsIgnoreCase("HF")) {
+                throw new IllegalArgumentException("Radio type must be UHF, VHF, or HF");
             }
             if (airport.getRadioFrequency() <= 0) {
                 throw new IllegalArgumentException("Radio frequency must be positive");
             }
+            
+            // Add frequency range validation based on radio type
+            if (airport.getRadioType().equalsIgnoreCase("VHF")) {
+                if (airport.getRadioFrequency() < 118.0 || airport.getRadioFrequency() > 136.975) {
+                    throw new IllegalArgumentException("VHF frequency must be between 118.0 and 136.975");
+                }
+            } else if (airport.getRadioType().equalsIgnoreCase("UHF")) {
+                if (airport.getRadioFrequency() < 225 || airport.getRadioFrequency() > 399.95) {
+                    throw new IllegalArgumentException("UHF frequency must be between 225 and 399.95");
+                }
+            } else if (airport.getRadioType().equalsIgnoreCase("HF")) {
+                if (airport.getRadioFrequency() < 2 || airport.getRadioFrequency() > 30) {
+                    throw new IllegalArgumentException("HF frequency must be between 2 and 30");
+                }
+            }
+            
             return true;
         } catch (IllegalArgumentException e) {
             showErrorDialog("Validation Error", e.getMessage());
