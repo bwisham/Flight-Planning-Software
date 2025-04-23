@@ -8,6 +8,7 @@
  * - Listing all airplanes
  * @author Andrew
  */
+import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -193,11 +194,47 @@ public class AirplaneManager {
     @SuppressWarnings("UseSpecificCatch")
     public void modifyAirplane() {
         try {
-            Integer key = showNumericInputDialogWithValidation(
-                "Enter airplane key to modify:",
-                "Invalid airplane key",
-                1, Integer.MAX_VALUE
+            // Create a panel with the list and input field
+            JPanel panel = new JPanel(new BorderLayout());
+            
+            // Add the airplane list in a scrollable text area
+            JTextArea listArea = new JTextArea(getCompactAirplaneList());
+            listArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(listArea);
+            scrollPane.setPreferredSize(new Dimension(500, 150));
+            panel.add(scrollPane, BorderLayout.CENTER);
+            
+            // Add the input field below
+            JPanel inputPanel = new JPanel();
+            inputPanel.add(new JLabel("Enter airplane key to modify:"));
+            JTextField keyField = new JTextField(10);
+            inputPanel.add(keyField);
+            panel.add(inputPanel, BorderLayout.SOUTH);
+            
+            // Show the dialog
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                panel, 
+                "Modify Airplane", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
             );
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return;
+            }
+            
+            // Validate the input
+            int key;
+            try {
+                key = Integer.parseInt(keyField.getText());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid airplane key: must be a number");
+            }
+            
+            if (key < 1) {
+                throw new IllegalArgumentException("Airplane key must be positive");
+            }
 
             Airplane airplane = planeDbase.getAirplane(key);
             if (airplane == null) {
@@ -282,11 +319,47 @@ public class AirplaneManager {
     @SuppressWarnings("UseSpecificCatch")
     public void deleteAirplane() {
         try {
-            Integer key = showNumericInputDialogWithValidation(
-                "Enter airplane key to delete:",
-                "Invalid airplane key",
-                1, Integer.MAX_VALUE
+            // Create a panel with the list and input field
+            JPanel panel = new JPanel(new BorderLayout());
+            
+            // Add the airplane list in a scrollable text area
+            JTextArea listArea = new JTextArea(getCompactAirplaneList());
+            listArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(listArea);
+            scrollPane.setPreferredSize(new Dimension(500, 150));
+            panel.add(scrollPane, BorderLayout.CENTER);
+            
+            // Add the input field below
+            JPanel inputPanel = new JPanel();
+            inputPanel.add(new JLabel("Enter airplane key to delete:"));
+            JTextField keyField = new JTextField(10);
+            inputPanel.add(keyField);
+            panel.add(inputPanel, BorderLayout.SOUTH);
+            
+            // Show the dialog
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                panel, 
+                "Delete Airplane", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
             );
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return;
+            }
+            
+            // Validate the input
+            int key;
+            try {
+                key = Integer.parseInt(keyField.getText());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid airplane key: must be a number");
+            }
+            
+            if (key < 1) {
+                throw new IllegalArgumentException("Airplane key must be positive");
+            }
 
             Airplane airplane = planeDbase.getAirplane(key);
             if (airplane == null) {
@@ -345,6 +418,33 @@ public class AirplaneManager {
         } catch (Exception e) {
             showErrorDialog("Error", "Error retrieving list: " + e.getMessage());
         }
+    }
+
+    /**
+     * Shows compact list of airplanes with their keys
+     * @return String containing formatted list
+     */
+    private String getCompactAirplaneList() {
+        Collection<Airplane> airplanes = planeDbase.getAllAirplanes();
+        if (airplanes.isEmpty()) {
+            return "No airplanes in database.";
+        }
+
+        StringBuilder sb = new StringBuilder("Current Airplanes:\n");
+        sb.append(String.format("%-5s %-15s %-15s %-10s\n", "Key", "Make", "Model", "Type"));
+        sb.append("------------------------------------------------\n");
+        for (Airplane airplane : airplanes) {
+            sb.append(String.format("%-5d %-15s %-15s %-10s\n", 
+                airplane.getKey(), 
+                truncate(airplane.getMake(), 15),
+                truncate(airplane.getModel(), 15),
+                truncate(airplane.getAircraftType(), 10)));
+        }
+        return sb.toString();
+    }
+
+    private String truncate(String str, int length) {
+        return str.length() > length ? str.substring(0, length-3) + "..." : str;
     }
 
     /**
@@ -428,7 +528,17 @@ public class AirplaneManager {
     private int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
         while (true) {
             try {
-                String input = JOptionPane.showInputDialog(message);
+                // Create a text area for the message
+                JTextArea textArea = new JTextArea(message);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+                
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(textArea, BorderLayout.CENTER);
+                panel.add(new JLabel("Enter value:"), BorderLayout.SOUTH);
+                
+                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
                 if (input == null) throw new IllegalArgumentException("Operation cancelled");
                 int value = Integer.parseInt(input);
                 if (value >= min && value <= max) return value;
@@ -442,7 +552,16 @@ public class AirplaneManager {
     private double showNumericInputDialogWithValidation(String message, String errorMessage, double min, double max) {
         while (true) {
             try {
-                String input = JOptionPane.showInputDialog(message);
+                JTextArea textArea = new JTextArea(message);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+                
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(textArea, BorderLayout.CENTER);
+                panel.add(new JLabel("Enter value:"), BorderLayout.SOUTH);
+                
+                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
                 if (input == null) throw new IllegalArgumentException("Operation cancelled");
                 double value = Double.parseDouble(input);
                 if (value >= min && value <= max) return value;
@@ -457,7 +576,16 @@ public class AirplaneManager {
             int min, int max, boolean allowEmpty) {
         while (true) {
             try {
-                String input = JOptionPane.showInputDialog(message);
+                JTextArea textArea = new JTextArea(message);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+                
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(textArea, BorderLayout.CENTER);
+                panel.add(new JLabel("Enter value (0 to keep current):"), BorderLayout.SOUTH);
+                
+                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
                 if (input == null) throw new IllegalArgumentException("Operation cancelled");
                 if (allowEmpty && input.trim().isEmpty()) return null;
                 int value = Integer.parseInt(input);
@@ -473,7 +601,16 @@ public class AirplaneManager {
             double min, double max, boolean allowEmpty) {
         while (true) {
             try {
-                String input = JOptionPane.showInputDialog(message);
+                JTextArea textArea = new JTextArea(message);
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+                
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(textArea, BorderLayout.CENTER);
+                panel.add(new JLabel("Enter value (0 to keep current):"), BorderLayout.SOUTH);
+                
+                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
                 if (input == null) throw new IllegalArgumentException("Operation cancelled");
                 if (allowEmpty && input.trim().isEmpty()) return null;
                 double value = Double.parseDouble(input);

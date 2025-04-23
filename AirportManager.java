@@ -7,6 +7,7 @@
  * - Deleting records
  * - Listing all airports
  */
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
@@ -171,17 +172,74 @@ public class AirportManager {
     /**
      * Modifies existing airport record with field-by-field updates
      * Preserves current values when fields are left blank
+     * Shows list of airports with key input on same screen
      */
     @SuppressWarnings({"UnnecessaryUnboxing", "UseSpecificCatch"})
     public void modifyAirport() {
         try {
-            // Get airport to modify
-            Integer key = showNumericInputDialogWithValidation(
-                "Enter key of airport to modify:",
-                "Invalid airport key",
-                1, Integer.MAX_VALUE
-            );
+            // First get all airports
+            Collection<Airport> allAirports = portDbase.getAllAirports();
+            if (allAirports.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No airports available to modify.");
+                return;
+            }
 
+            // Build the list of airports with keys
+            StringBuilder airportList = new StringBuilder("Available Airports:\n");
+            airportList.append(String.format("%-6s %-40s %-6s\n", "Key", "Airport Name", "ICAO"));
+            airportList.append("------------------------------------------------\n");
+            for (Airport airport : allAirports) {
+                airportList.append(String.format("%-6d %-40s %-6s\n", 
+                    airport.getKey(), 
+                    airport.getName(), 
+                    airport.getIcao()));
+            }
+
+            // Create panel with both the list and input field
+            JPanel panel = new JPanel(new BorderLayout());
+            
+            // Add the airport list in a scrollable text area
+            JTextArea textArea = new JTextArea(airportList.toString());
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(600, 300));
+            
+            // Add the input field for the key
+            JTextField keyField = new JTextField(10);
+            JPanel inputPanel = new JPanel();
+            inputPanel.add(new JLabel("Enter airport key to modify:"));
+            inputPanel.add(keyField);
+            
+            // Add components to main panel
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(inputPanel, BorderLayout.SOUTH);
+            
+            // Show the combined dialog
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                panel, 
+                "Modify Airport", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
+            );
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return; // User cancelled
+            }
+            
+            // Validate the entered key
+            String keyText = keyField.getText();
+            if (keyText == null || keyText.trim().isEmpty()) {
+                throw new IllegalArgumentException("No key entered");
+            }
+            
+            int key;
+            try {
+                key = Integer.parseInt(keyText.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid key format. Please enter a number.");
+            }
+            
             Airport airport = portDbase.getAirport(key);
             if (airport == null) {
                 throw new IllegalArgumentException("Airport with key " + key + " not found");
@@ -189,7 +247,7 @@ public class AirportManager {
 
             // Show current details before modification
             JOptionPane.showMessageDialog(null, "Current airport details:\n" + airport);
-
+            
             // Field-by-field modification with preservation of existing values
             
             // Update name if provided
@@ -310,32 +368,75 @@ public class AirportManager {
     }
 
     /**
-     * Helper method to get descriptive fuel type string
-     * @param fuelType The numeric fuel type code
-     * @return Descriptive string for the fuel type
-     */
-    private String getFuelTypeDescription(int fuelType) {
-        switch (fuelType) {
-            case 1: return "AVGAS";
-            case 2: return "JA-1 / JP-8";
-            case 3: return "Both";
-            default: return "Unknown";
-        }
-    }
-
-    /**
      * Deletes an airport record after confirmation
+     * Shows list of airports with key input on same screen
      */
     @SuppressWarnings("UseSpecificCatch")
     public void deleteAirport() {
         try {
-            // Get airport to delete
-            Integer key = showNumericInputDialogWithValidation(
-                "Enter key of airport to delete:",
-                "Invalid airport key",
-                1, Integer.MAX_VALUE
-            );
+            // First get all airports
+            Collection<Airport> allAirports = portDbase.getAllAirports();
+            if (allAirports.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No airports available to delete.");
+                return;
+            }
 
+            // Build the list of airports with keys
+            StringBuilder airportList = new StringBuilder("Available Airports:\n");
+            airportList.append(String.format("%-6s %-40s %-6s\n", "Key", "Airport Name", "ICAO"));
+            airportList.append("------------------------------------------------\n");
+            for (Airport airport : allAirports) {
+                airportList.append(String.format("%-6d %-40s %-6s\n", 
+                    airport.getKey(), 
+                    airport.getName(), 
+                    airport.getIcao()));
+            }
+
+            // Create panel with both the list and input field
+            JPanel panel = new JPanel(new BorderLayout());
+            
+            // Add the airport list in a scrollable text area
+            JTextArea textArea = new JTextArea(airportList.toString());
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(600, 300));
+            
+            // Add the input field for the key
+            JTextField keyField = new JTextField(10);
+            JPanel inputPanel = new JPanel();
+            inputPanel.add(new JLabel("Enter airport key to delete:"));
+            inputPanel.add(keyField);
+            
+            // Add components to main panel
+            panel.add(scrollPane, BorderLayout.CENTER);
+            panel.add(inputPanel, BorderLayout.SOUTH);
+            
+            // Show the combined dialog
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                panel, 
+                "Delete Airport", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
+            );
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return; // User cancelled
+            }
+            
+            // Validate the entered key
+            String keyText = keyField.getText();
+            if (keyText == null || keyText.trim().isEmpty()) {
+                throw new IllegalArgumentException("No key entered");
+            }
+            
+            int key;
+            try {
+                key = Integer.parseInt(keyText.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid key format. Please enter a number.");
+            }
+            
             Airport airport = portDbase.getAirport(key);
             if (airport == null) {
                 throw new IllegalArgumentException("Airport with key " + key + " not found");
@@ -364,6 +465,20 @@ public class AirportManager {
             showErrorDialog("Deletion Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "An unexpected error occurred while deleting airport: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Helper method to get descriptive fuel type string
+     * @param fuelType The numeric fuel type code
+     * @return Descriptive string for the fuel type
+     */
+    private String getFuelTypeDescription(int fuelType) {
+        switch (fuelType) {
+            case 1: return "AVGAS";
+            case 2: return "JA-1 / JP-8";
+            case 3: return "Both";
+            default: return "Unknown";
         }
     }
 
