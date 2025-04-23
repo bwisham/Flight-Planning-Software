@@ -27,7 +27,7 @@ public class Userclass {
     }
     
     // Loads the database from file or creates new if not found/corrupted
-    private UserDatabase loadDatabase() {
+    public UserDatabase loadDatabase() {
         File dbFile = new File(DB_FILE);
         System.out.println("Database file location: " + dbFile.getAbsolutePath());
         
@@ -147,12 +147,12 @@ public class Userclass {
     }
 
     // Generates a random 4-digit user ID (1000-9999)
-    private int generateUserId() {
+    public int generateUserId() {
         return 1000 + random.nextInt(9000);
     }
 
     // Handles final submission of new user data
-    private void btnSubmit(String fname, String lname, String pnumber, String haddress, String eaddress) {
+    public void btnSubmit(String fname, String lname, String pnumber, String haddress, String eaddress) {
         // Show confirmation dialog with all entered data
         int confirmation = JOptionPane.showConfirmDialog(null, 
             "Confirm submission?\nFirst Name: " + fname + "\nLast Name: " + lname + 
