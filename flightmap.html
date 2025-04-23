@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<html>
+<head>
+    <title>Flight Path</title>
+    <meta charset="utf-8" />
+    <!-- Preload Leaflet from CDN with local fallback -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { 
+            height: 100vh; 
+            width: 100vw;
+            background-color: #e8f4f8; /* Fallback color */
+        }
+        .map-error {
+            padding: 20px;
+            color: red;
+            font-family: Arial;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Leaflet JS with CDN fallback -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Check if Leaflet loaded
+        if(!window.L) {
+            document.getElementById('map').innerHTML = 
+                '<div class="map-error">Failed to load map library. Check internet connection.</div>';
+            throw new Error("Leaflet failed to load");
+        }
+
+        const route = ROUTE_PLACEHOLDER;
+        const map = L.map('map').setView([route[0].lat, route[0].lon], 5);
+        
+        // Add OSM tiles with error handling
+        const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 18,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        }).addTo(map);
+        
+        // Show error if tiles fail to load
+        map.on('tileerror', function() {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'map-error';
+            errorDiv.textContent = 'Map tiles failed to load. Showing basic view.';
+            map.getContainer().appendChild(errorDiv);
+        });
+
+        // Draw flight path
+        const points = route.map(wp => [wp.lat, wp.lon]);
+        L.polyline(points, {
+            color: '#0066ff',
+            weight: 3,
+            opacity: 0.8
+        }).addTo(map);
+
+        // Add markers
+        route.forEach((wp, i) => {
+            L.marker([wp.lat, wp.lon])
+                .bindPopup(`<b>${i === 0 ? 'Departure' : i === route.length-1 ? 'Destination' : 'Stop'}:</b> ${wp.name} (${wp.icao})`)
+                .addTo(map);
+        });
+
+        // Auto-zoom to route
+        map.fitBounds(points);
+    </script>
+</body>
+</html>
