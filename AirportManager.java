@@ -32,9 +32,9 @@ public class AirportManager {
         try {
             // Validate and collect airport name
             String name = showInputDialogWithValidation(
-                "Enter the name of the airport (max 40 chars):",
-                "Airport name cannot exceed 40 characters",
-                input -> input != null && input.length() <= 40
+                "Enter the name of the airport (10-40 chars):",
+                "Airport name must be between 10 and 40 characters",
+                input -> input != null && input.length() >= 10 && input.length() <= 40
             );
 
             // Check for duplicate airport names
@@ -273,10 +273,10 @@ public class AirportManager {
             
             // Update name if provided
             String name = showInputDialogWithValidation(
-                "Enter new name (max 40 chars, leave blank to keep current):\n" +
+                "Enter new name (10-40 chars, leave blank to keep current):\n" +
                 "Current: " + airport.getName(),
-                "Airport name must be ≤40 characters",
-                input -> input.isEmpty() || (!input.trim().isEmpty() && input.length() <= 40)
+                "Airport name must be between 10 and 40 characters",
+                input -> input.isEmpty() || (!input.trim().isEmpty() && input.length() >= 10 && input.length() <= 40)
             );
             if (!name.isEmpty()) {
                 if (!name.equalsIgnoreCase(airport.getName())) {
@@ -566,6 +566,9 @@ public class AirportManager {
             if (airport.getName() == null || airport.getName().trim().isEmpty()) {
                 throw new IllegalArgumentException("Airport name cannot be empty");
             }
+            if (airport.getName().length() < 10) {
+                throw new IllegalArgumentException("Airport name must be at least 10 characters");
+            }
             if (airport.getName().length() > 40) {
                 throw new IllegalArgumentException("Airport name cannot exceed 40 characters");
             }
@@ -658,9 +661,9 @@ public class AirportManager {
             }
             input = input.trim();
             
+            // Allow empty input (for modify operations)
             if (input.isEmpty()) {
-                showErrorDialog("Invalid Input", "Field cannot be blank");
-                continue;
+                return input;
             }
             
             if (!validator.test(input)) {
@@ -1000,7 +1003,7 @@ class AirportDatabase extends HashMap<String, Airport> {
     /**
      * Deletes airport by key and saves
      * @param key The airport's unique key
-     * @return true if deleted, false if not found
+     * @return true if deleted, false
      */
     public boolean deleteAirport(int key) {
         boolean removed = airports.remove(key) != null;
