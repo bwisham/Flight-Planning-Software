@@ -207,13 +207,17 @@ public class AirportManager {
 
             // Build the list of airports with keys
             StringBuilder airportList = new StringBuilder("Available Airports:\n");
-            airportList.append(String.format("%-6s %-40s %-6s\n", "Key", "Airport Name", "ICAO"));
-            airportList.append("------------------------------------------------\n");
+            airportList.append(String.format("%-6s %-40s %-10s %-8s %-12s %-10s\n", 
+                "Key", "Name", "ICAO", "Latitude", "Longitude", "Fuel Type"));
+            airportList.append("----------------------------------------------------------------------------------------\n");
             for (Airport airport : allAirports) {
-                airportList.append(String.format("%-6d %-40s %-6s\n", 
+                airportList.append(String.format("%-6d %-40s %-10s %-8.4f %-12.4f %-10s\n", 
                     airport.getKey(), 
                     airport.getName(), 
-                    airport.getIcao()));
+                    airport.getIcao(),
+                    airport.getLatitude(),
+                    airport.getLongitude(),
+                    getFuelTypeDescription(airport.getFuelType())));
             }
 
             // Create panel with both the list and input field
@@ -223,7 +227,7 @@ public class AirportManager {
             JTextArea textArea = new JTextArea(airportList.toString());
             textArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(textArea);
-            scrollPane.setPreferredSize(new java.awt.Dimension(600, 300));
+            scrollPane.setPreferredSize(new java.awt.Dimension(800, 300));
             
             // Add the input field for the key
             JTextField keyField = new JTextField(10);
@@ -426,13 +430,17 @@ public class AirportManager {
 
             // Build the list of airports with keys
             StringBuilder airportList = new StringBuilder("Available Airports:\n");
-            airportList.append(String.format("%-6s %-40s %-6s\n", "Key", "Airport Name", "ICAO"));
-            airportList.append("------------------------------------------------\n");
+            airportList.append(String.format("%-6s %-40s %-10s %-8s %-12s %-10s\n", 
+                "Key", "Name", "ICAO", "Latitude", "Longitude", "Fuel Type"));
+            airportList.append("----------------------------------------------------------------------------------------\n");
             for (Airport airport : allAirports) {
-                airportList.append(String.format("%-6d %-40s %-6s\n", 
+                airportList.append(String.format("%-6d %-40s %-10s %-8.4f %-12.4f %-10s\n", 
                     airport.getKey(), 
                     airport.getName(), 
-                    airport.getIcao()));
+                    airport.getIcao(),
+                    airport.getLatitude(),
+                    airport.getLongitude(),
+                    getFuelTypeDescription(airport.getFuelType())));
             }
 
             // Create panel with both the list and input field
@@ -442,7 +450,7 @@ public class AirportManager {
             JTextArea textArea = new JTextArea(airportList.toString());
             textArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(textArea);
-            scrollPane.setPreferredSize(new java.awt.Dimension(600, 300));
+            scrollPane.setPreferredSize(new java.awt.Dimension(800, 300));
             
             // Add the input field for the key
             JTextField keyField = new JTextField(10);

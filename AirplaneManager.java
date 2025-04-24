@@ -22,6 +22,9 @@ public class AirplaneManager {
     
     // File name for persistent data storage
     public static String DATA_FILE = "airplanes.dat";
+    
+    // Constants for aircraft types
+    private static final String[] AIRCRAFT_TYPES = {"Jet", "Prop", "Turboprop"};
 
     /**
      * Default constructor initializes the database
@@ -78,52 +81,120 @@ public class AirplaneManager {
      * Adds a new airplane record after validating all input fields
      * Shows appropriate error messages for invalid inputs
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void addAirplane() {
         try {
-            // Collect and validate all required fields
-            String make = showInputDialogWithValidation(
-                "Enter airplane make (max 30 chars):",
-                "Make must be ≤30 characters and cannot be empty",
-                input -> input != null && !input.trim().isEmpty() && input.length() <= 30
+            // Create a panel for all inputs
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            
+            // Make
+            JTextField makeField = new JTextField(20);
+            panel.add(new JLabel("Make (max 30 chars):"));
+            panel.add(makeField);
+            
+            // Model
+            JTextField modelField = new JTextField(20);
+            panel.add(new JLabel("Model (max 30 chars):"));
+            panel.add(modelField);
+            
+            // Aircraft Type (dropdown)
+            JComboBox<String> typeCombo = new JComboBox<>(AIRCRAFT_TYPES);
+            panel.add(new JLabel("Aircraft Type:"));
+            panel.add(typeCombo);
+            
+            // Fuel Size
+            JTextField fuelSizeField = new JTextField(10);
+            panel.add(new JLabel("Fuel Tank Size (liters):"));
+            panel.add(fuelSizeField);
+            
+            // Fuel Type
+            JComboBox<String> fuelTypeCombo = new JComboBox<>(new String[]{"Aviation", "Jet"});
+            panel.add(new JLabel("Fuel Type:"));
+            panel.add(fuelTypeCombo);
+            
+            // Fuel Burn
+            JTextField fuelBurnField = new JTextField(10);
+            panel.add(new JLabel("Fuel Burn Rate (liters/hour):"));
+            panel.add(fuelBurnField);
+            
+            // Airspeed
+            JTextField airspeedField = new JTextField(10);
+            panel.add(new JLabel("Cruising Airspeed (knots):"));
+            panel.add(airspeedField);
+            
+            // Show the dialog
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                panel, 
+                "Add New Airplane", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
             );
-
-            String model = showInputDialogWithValidation(
-                "Enter airplane model (max 30 chars):",
-                "Model must be ≤30 characters and cannot be empty",
-                input -> input != null && !input.trim().isEmpty() && input.length() <= 30
-            );
-
-            String aircraftType = showInputDialogWithValidation(
-                "Enter aircraft type:",
-                "Aircraft type cannot be empty (max 10 letters)",
-                input -> input != null && input.matches("[A-Za-z ]+") && input.length() <= 10
-            );
-
-            double fuelSize = showNumericInputDialogWithValidation(
-                "Enter fuel tank size (liters):",
-                "Invalid fuel size. Must be positive.",
-                0.1, Double.MAX_VALUE
-            );
-
-            int fuelType = showNumericInputDialogWithValidation(
-                "Enter fuel type (1=Aviation, 2=Jet):",
-                "Invalid fuel type. Must be 1 or 2.",
-                1, 2
-            );
-
-            double fuelBurn = showNumericInputDialogWithValidation(
-                "Enter fuel burn rate (liters/hour):",
-                "Invalid fuel burn rate. Must be positive.",
-                0.1, Double.MAX_VALUE
-            );
-
-            int airspeed = showNumericInputDialogWithValidation(
-                "Enter cruising airspeed (knots):",
-                "Invalid airspeed. Must be 50-1000 knots.",
-                50, 1000
-            );
-
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return;
+            }
+            
+            // Validate inputs one by one with separate error messages
+            String make = makeField.getText().trim();
+            if (make.isEmpty()) {
+                showErrorDialog("Invalid Input", "Make cannot be empty");
+                return;
+            }
+            if (make.length() > 30) {
+                showErrorDialog("Invalid Input", "Make cannot exceed 30 characters");
+                return;
+            }
+            
+            String model = modelField.getText().trim();
+            if (model.isEmpty()) {
+                showErrorDialog("Invalid Input", "Model cannot be empty");
+                return;
+            }
+            if (model.length() > 30) {
+                showErrorDialog("Invalid Input", "Model cannot exceed 30 characters");
+                return;
+            }
+            
+            String aircraftType = (String)typeCombo.getSelectedItem();
+            
+            double fuelSize;
+            try {
+                fuelSize = Double.parseDouble(fuelSizeField.getText().trim());
+                if (fuelSize <= 0) {
+                    showErrorDialog("Invalid Input", "Fuel size must be positive");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                showErrorDialog("Invalid Input", "Fuel size must be a valid number");
+                return;
+            }
+            
+            int fuelType = fuelTypeCombo.getSelectedIndex() + 1; // 1=Aviation, 2=Jet
+            
+            double fuelBurn;
+            try {
+                fuelBurn = Double.parseDouble(fuelBurnField.getText().trim());
+                if (fuelBurn <= 0) {
+                    showErrorDialog("Invalid Input", "Fuel burn rate must be positive");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                showErrorDialog("Invalid Input", "Fuel burn rate must be a valid number");
+                return;
+            }
+            
+            int airspeed;
+            try {
+                airspeed = Integer.parseInt(airspeedField.getText().trim());
+                if (airspeed < 50 || airspeed > 1000) {
+                    showErrorDialog("Invalid Input", "Airspeed must be between 50-1000 knots");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                showErrorDialog("Invalid Input", "Airspeed must be a valid integer");
+                return;
+            }
+            
             // Create and validate new airplane
             int key = planeDbase.getNextKey();
             Airplane airplane = new Airplane(make, model, aircraftType, fuelSize, fuelType, fuelBurn, airspeed, key);
@@ -136,8 +207,6 @@ public class AirplaneManager {
             saveAirplanes();
             JOptionPane.showMessageDialog(null, "Airplane added successfully with key: " + key);
 
-        } catch (IllegalArgumentException e) {
-            showErrorDialog("Input Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "Unexpected error adding airplane: " + e.getMessage());
         }
@@ -147,7 +216,6 @@ public class AirplaneManager {
      * Searches for airplanes by make, model, or type
      * Displays results in dialog box
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void searchAirplane() {
         try {
             String[] options = {"By Make", "By Model", "By Type"};
@@ -166,22 +234,26 @@ public class AirplaneManager {
                 return;
             }
 
-            String searchTerm = showInputDialogWithValidation(
+            String searchTerm = JOptionPane.showInputDialog(
+                null,
                 choice == 0 ? "Enter airplane make:" :
                 choice == 1 ? "Enter airplane model:" : "Enter airplane type:",
-                "Search term cannot be empty",
-                input -> input != null && !input.trim().isEmpty()
+                "Search",
+                JOptionPane.QUESTION_MESSAGE
             );
 
-            Airplane result = planeDbase.searchAirplane(searchTerm, choice);
+            if (searchTerm == null || searchTerm.trim().isEmpty()) {
+                showErrorDialog("Search Error", "Search term cannot be empty");
+                return;
+            }
+
+            Airplane result = planeDbase.searchAirplane(searchTerm.trim(), choice);
             if (result != null) {
                 JOptionPane.showMessageDialog(null, "Search result:\n" + result);
             } else {
                 JOptionPane.showMessageDialog(null, "No matching airplane found.");
             }
 
-        } catch (IllegalArgumentException e) {
-            showErrorDialog("Search Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "Unexpected error searching: " + e.getMessage());
         }
@@ -191,7 +263,6 @@ public class AirplaneManager {
      * Modifies existing airplane record
      * Allows partial updates (blank fields keep current values)
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void modifyAirplane() {
         try {
             // Create a panel with the list and input field
@@ -229,85 +300,153 @@ public class AirplaneManager {
             try {
                 key = Integer.parseInt(keyField.getText());
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid airplane key: must be a number");
+                showErrorDialog("Invalid Input", "Airplane key must be a number");
+                return;
             }
             
             if (key < 1) {
-                throw new IllegalArgumentException("Airplane key must be positive");
+                showErrorDialog("Invalid Input", "Airplane key must be positive");
+                return;
             }
 
             Airplane airplane = planeDbase.getAirplane(key);
             if (airplane == null) {
-                throw new IllegalArgumentException("Airplane with key " + key + " not found");
+                showErrorDialog("Not Found", "Airplane with key " + key + " not found");
+                return;
             }
 
-            JOptionPane.showMessageDialog(null, "Current details:\n" + airplane);
-
-            // Field-by-field modification
-            String make = showInputDialogWithValidation(
-                "Enter new make (blank to keep current):\nCurrent: " + airplane.getMake(),
-                "Make must be ≤30 chars",
-                input -> input == null || input.isEmpty() || input.length() <= 30
+            // Create a panel for all inputs with current values
+            JPanel editPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+            
+            // Make
+            JTextField makeField = new JTextField(airplane.getMake(), 20);
+            editPanel.add(new JLabel("Make (max 30 chars):"));
+            editPanel.add(makeField);
+            
+            // Model
+            JTextField modelField = new JTextField(airplane.getModel(), 20);
+            editPanel.add(new JLabel("Model (max 30 chars):"));
+            editPanel.add(modelField);
+            
+            // Aircraft Type (dropdown with current selection)
+            JComboBox<String> typeCombo = new JComboBox<>(AIRCRAFT_TYPES);
+            typeCombo.setSelectedItem(airplane.getAircraftType());
+            editPanel.add(new JLabel("Aircraft Type:"));
+            editPanel.add(typeCombo);
+            
+            // Fuel Size
+            JTextField fuelSizeField = new JTextField(String.valueOf(airplane.getFuelSize()), 10);
+            editPanel.add(new JLabel("Fuel Tank Size (liters):"));
+            editPanel.add(fuelSizeField);
+            
+            // Fuel Type
+            JComboBox<String> fuelTypeCombo = new JComboBox<>(new String[]{"Aviation", "Jet"});
+            fuelTypeCombo.setSelectedIndex(airplane.getFuelType() - 1);
+            editPanel.add(new JLabel("Fuel Type:"));
+            editPanel.add(fuelTypeCombo);
+            
+            // Fuel Burn
+            JTextField fuelBurnField = new JTextField(String.valueOf(airplane.getFuelBurn()), 10);
+            editPanel.add(new JLabel("Fuel Burn Rate (liters/hour):"));
+            editPanel.add(fuelBurnField);
+            
+            // Airspeed
+            JTextField airspeedField = new JTextField(String.valueOf(airplane.getAirspeed()), 10);
+            editPanel.add(new JLabel("Cruising Airspeed (knots):"));
+            editPanel.add(airspeedField);
+            
+            // Show the dialog
+            result = JOptionPane.showConfirmDialog(
+                null, 
+                editPanel, 
+                "Modify Airplane", 
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
             );
-            if (make != null && !make.isEmpty()) airplane.setMake(make);
-
-            String model = showInputDialogWithValidation(
-                "Enter new model (blank to keep current):\nCurrent: " + airplane.getModel(),
-                "Model must be ≤30 chars",
-                input -> input == null || input.isEmpty() || input.length() <= 30
-            );
-            if (model != null && !model.isEmpty()) airplane.setModel(model);
-
-            String aircraftType = showInputDialogWithValidation(
-                "Enter new type (blank to keep current):\nCurrent: " + airplane.getAircraftType(),
-                "Type must be ≤10 letters",
-                input -> input == null || input.isEmpty() || (input.matches("[A-Za-z ]+") && input.length() <= 10)
-            );
-            if (aircraftType != null && !aircraftType.isEmpty()) airplane.setAircraftType(aircraftType);
-
-            Double fuelSize = showNumericInputDialogWithValidation(
-                "Enter new fuel size (0 to keep current):\nCurrent: " + airplane.getFuelSize(),
-                "Fuel size must be positive",
-                0.1, Double.MAX_VALUE,
-                true
-            );
-            if (fuelSize != null && fuelSize != 0) airplane.setFuelSize(fuelSize);
-
-            Integer fuelType = showNumericInputDialogWithValidation(
-                "Enter new fuel type (0 to keep current):\nCurrent: " + 
-                (airplane.getFuelType() == 1 ? "Aviation" : "Jet"),
-                "Must be 1 or 2",
-                1, 2,
-                true
-            );
-            if (fuelType != null && fuelType != 0) airplane.setFuelType(fuelType);
-
-            Double fuelBurn = showNumericInputDialogWithValidation(
-                "Enter new fuel burn (0 to keep current):\nCurrent: " + airplane.getFuelBurn(),
-                "Fuel burn must be positive",
-                0.1, Double.MAX_VALUE,
-                true
-            );
-            if (fuelBurn != null && fuelBurn != 0) airplane.setFuelBurn(fuelBurn);
-
-            Integer airspeed = showNumericInputDialogWithValidation(
-                "Enter new airspeed (0 to keep current):\nCurrent: " + airplane.getAirspeed(),
-                "Airspeed must be 50-1000 knots",
-                50, 1000,
-                true
-            );
-            if (airspeed != null && airspeed != 0) airplane.setAirspeed(airspeed);
+            
+            if (result != JOptionPane.OK_OPTION) {
+                return;
+            }
+            
+            // Validate inputs one by one with separate error messages
+            String make = makeField.getText().trim();
+            if (!make.isEmpty() && make.length() > 30) {
+                showErrorDialog("Invalid Input", "Make cannot exceed 30 characters");
+                return;
+            }
+            
+            String model = modelField.getText().trim();
+            if (!model.isEmpty() && model.length() > 30) {
+                showErrorDialog("Invalid Input", "Model cannot exceed 30 characters");
+                return;
+            }
+            
+            String aircraftType = (String)typeCombo.getSelectedItem();
+            
+            double fuelSize = airplane.getFuelSize();
+            if (!fuelSizeField.getText().trim().isEmpty()) {
+                try {
+                    fuelSize = Double.parseDouble(fuelSizeField.getText().trim());
+                    if (fuelSize <= 0) {
+                        showErrorDialog("Invalid Input", "Fuel size must be positive");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    showErrorDialog("Invalid Input", "Fuel size must be a valid number");
+                    return;
+                }
+            }
+            
+            int fuelType = airplane.getFuelType();
+            if (fuelTypeCombo.getSelectedIndex() != airplane.getFuelType() - 1) {
+                fuelType = fuelTypeCombo.getSelectedIndex() + 1;
+            }
+            
+            double fuelBurn = airplane.getFuelBurn();
+            if (!fuelBurnField.getText().trim().isEmpty()) {
+                try {
+                    fuelBurn = Double.parseDouble(fuelBurnField.getText().trim());
+                    if (fuelBurn <= 0) {
+                        showErrorDialog("Invalid Input", "Fuel burn rate must be positive");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    showErrorDialog("Invalid Input", "Fuel burn rate must be a valid number");
+                    return;
+                }
+            }
+            
+            int airspeed = airplane.getAirspeed();
+            if (!airspeedField.getText().trim().isEmpty()) {
+                try {
+                    airspeed = Integer.parseInt(airspeedField.getText().trim());
+                    if (airspeed < 50 || airspeed > 1000) {
+                        showErrorDialog("Invalid Input", "Airspeed must be between 50-1000 knots");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    showErrorDialog("Invalid Input", "Airspeed must be a valid integer");
+                    return;
+                }
+            }
+            
+            // Update the airplane object
+            if (!make.isEmpty()) airplane.setMake(make);
+            if (!model.isEmpty()) airplane.setModel(model);
+            airplane.setAircraftType(aircraftType);
+            airplane.setFuelSize(fuelSize);
+            airplane.setFuelType(fuelType);
+            airplane.setFuelBurn(fuelBurn);
+            airplane.setAirspeed(airspeed);
 
             if (!validateAirplaneData(airplane)) {
-                throw new IllegalArgumentException("Validation failed");
+                return;
             }
 
             planeDbase.updateAirplane(airplane);
             saveAirplanes();
             JOptionPane.showMessageDialog(null, "Airplane updated successfully.");
 
-        } catch (IllegalArgumentException e) {
-            showErrorDialog("Modification Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "Unexpected error modifying: " + e.getMessage());
         }
@@ -316,7 +455,6 @@ public class AirplaneManager {
     /**
      * Deletes airplane record after confirmation
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void deleteAirplane() {
         try {
             // Create a panel with the list and input field
@@ -354,16 +492,19 @@ public class AirplaneManager {
             try {
                 key = Integer.parseInt(keyField.getText());
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid airplane key: must be a number");
+                showErrorDialog("Invalid Input", "Airplane key must be a number");
+                return;
             }
             
             if (key < 1) {
-                throw new IllegalArgumentException("Airplane key must be positive");
+                showErrorDialog("Invalid Input", "Airplane key must be positive");
+                return;
             }
 
             Airplane airplane = planeDbase.getAirplane(key);
             if (airplane == null) {
-                throw new IllegalArgumentException("Airplane with key " + key + " not found");
+                showErrorDialog("Not Found", "Airplane with key " + key + " not found");
+                return;
             }
 
             int confirm = JOptionPane.showConfirmDialog(
@@ -379,14 +520,12 @@ public class AirplaneManager {
                     saveAirplanes();
                     JOptionPane.showMessageDialog(null, "Airplane deleted successfully.");
                 } else {
-                    throw new IllegalStateException("Deletion failed");
+                    showErrorDialog("Error", "Deletion failed");
                 }
             } else {
                 JOptionPane.showMessageDialog(null, "Deletion cancelled.");
             }
 
-        } catch (IllegalArgumentException e) {
-            showErrorDialog("Deletion Error", e.getMessage());
         } catch (Exception e) {
             showErrorDialog("Error", "Unexpected error deleting: " + e.getMessage());
         }
@@ -395,7 +534,6 @@ public class AirplaneManager {
     /**
      * Displays all airplanes in scrollable dialog
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void printAirplaneList() {
         try {
             Collection<Airplane> airplanes = planeDbase.getAllAirplanes();
@@ -412,7 +550,7 @@ public class AirplaneManager {
             JTextArea textArea = new JTextArea(sb.toString());
             textArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(textArea);
-            scrollPane.setPreferredSize(new java.awt.Dimension(600, 400));
+            scrollPane.setPreferredSize(new Dimension(600, 400));
             JOptionPane.showMessageDialog(null, scrollPane, "Airplane List", JOptionPane.PLAIN_MESSAGE);
 
         } catch (Exception e) {
@@ -472,11 +610,16 @@ public class AirplaneManager {
             if (airplane.getAircraftType() == null || airplane.getAircraftType().trim().isEmpty()) {
                 throw new IllegalArgumentException("Aircraft type required");
             }
-            if (!airplane.getAircraftType().matches("[A-Za-z ]+")) {
-                throw new IllegalArgumentException("Aircraft type must be letters only");
+            
+            boolean validType = false;
+            for (String type : AIRCRAFT_TYPES) {
+                if (type.equals(airplane.getAircraftType())) {
+                    validType = true;
+                    break;
+                }
             }
-            if (airplane.getAircraftType().length() > 10) {
-                throw new IllegalArgumentException("Aircraft type must be ≤10 characters");
+            if (!validType) {
+                throw new IllegalArgumentException("Aircraft type must be one of: " + String.join(", ", AIRCRAFT_TYPES));
             }
 
             if (airplane.getFuelSize() <= 0) {
@@ -513,115 +656,6 @@ public class AirplaneManager {
         }
     }
 
-    // Helper methods for input validation
-
-    private String showInputDialogWithValidation(String message, String errorMessage, 
-            java.util.function.Predicate<String> validator) {
-        while (true) {
-            String input = JOptionPane.showInputDialog(message);
-            if (input == null) throw new IllegalArgumentException("Operation cancelled");
-            if (validator.test(input)) return input.trim();
-            showErrorDialog("Invalid Input", errorMessage);
-        }
-    }
-
-    private int showNumericInputDialogWithValidation(String message, String errorMessage, int min, int max) {
-        while (true) {
-            try {
-                // Create a text area for the message
-                JTextArea textArea = new JTextArea(message);
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(textArea, BorderLayout.CENTER);
-                panel.add(new JLabel("Enter value:"), BorderLayout.SOUTH);
-                
-                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) throw new IllegalArgumentException("Operation cancelled");
-                int value = Integer.parseInt(input);
-                if (value >= min && value <= max) return value;
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid integer");
-            }
-        }
-    }
-
-    private double showNumericInputDialogWithValidation(String message, String errorMessage, double min, double max) {
-        while (true) {
-            try {
-                JTextArea textArea = new JTextArea(message);
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(textArea, BorderLayout.CENTER);
-                panel.add(new JLabel("Enter value:"), BorderLayout.SOUTH);
-                
-                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) throw new IllegalArgumentException("Operation cancelled");
-                double value = Double.parseDouble(input);
-                if (value >= min && value <= max) return value;
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid number");
-            }
-        }
-    }
-
-    private Integer showNumericInputDialogWithValidation(String message, String errorMessage, 
-            int min, int max, boolean allowEmpty) {
-        while (true) {
-            try {
-                JTextArea textArea = new JTextArea(message);
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(textArea, BorderLayout.CENTER);
-                panel.add(new JLabel("Enter value (0 to keep current):"), BorderLayout.SOUTH);
-                
-                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) throw new IllegalArgumentException("Operation cancelled");
-                if (allowEmpty && input.trim().isEmpty()) return null;
-                int value = Integer.parseInt(input);
-                if (value >= min && value <= max) return value;
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid integer");
-            }
-        }
-    }
-
-    private Double showNumericInputDialogWithValidation(String message, String errorMessage, 
-            double min, double max, boolean allowEmpty) {
-        while (true) {
-            try {
-                JTextArea textArea = new JTextArea(message);
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(textArea, BorderLayout.CENTER);
-                panel.add(new JLabel("Enter value (0 to keep current):"), BorderLayout.SOUTH);
-                
-                String input = JOptionPane.showInputDialog(null, panel, "Input", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) throw new IllegalArgumentException("Operation cancelled");
-                if (allowEmpty && input.trim().isEmpty()) return null;
-                double value = Double.parseDouble(input);
-                if (value >= min && value <= max) return value;
-                showErrorDialog("Invalid Input", errorMessage);
-            } catch (NumberFormatException e) {
-                showErrorDialog("Invalid Input", "Please enter a valid number");
-            }
-        }
-    }
-
     private void showErrorDialog(String title, String message) {
         JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
@@ -629,7 +663,6 @@ public class AirplaneManager {
     /**
      * Displays main menu and handles user navigation
      */
-    @SuppressWarnings("UseSpecificCatch")
     public void showMenu() {
         String[] options = {
             "Add Airplane",
