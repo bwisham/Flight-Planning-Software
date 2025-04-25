@@ -269,10 +269,10 @@ public class AirplaneManager {
             JPanel panel = new JPanel(new BorderLayout());
             
             // Add the airplane list in a scrollable text area
-            JTextArea listArea = new JTextArea(getCompactAirplaneList());
+            JTextArea listArea = new JTextArea(getDetailedAirplaneList());
             listArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(listArea);
-            scrollPane.setPreferredSize(new Dimension(500, 150));
+            scrollPane.setPreferredSize(new Dimension(600, 400));
             panel.add(scrollPane, BorderLayout.CENTER);
             
             // Add the input field below
@@ -461,10 +461,10 @@ public class AirplaneManager {
             JPanel panel = new JPanel(new BorderLayout());
             
             // Add the airplane list in a scrollable text area
-            JTextArea listArea = new JTextArea(getCompactAirplaneList());
+            JTextArea listArea = new JTextArea(getDetailedAirplaneList());
             listArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(listArea);
-            scrollPane.setPreferredSize(new Dimension(500, 150));
+            scrollPane.setPreferredSize(new Dimension(600, 400));
             panel.add(scrollPane, BorderLayout.CENTER);
             
             // Add the input field below
@@ -559,30 +559,20 @@ public class AirplaneManager {
     }
 
     /**
-     * Shows compact list of airplanes with their keys
+     * Shows detailed list of airplanes matching the print format
      * @return String containing formatted list
      */
-    private String getCompactAirplaneList() {
+    private String getDetailedAirplaneList() {
         Collection<Airplane> airplanes = planeDbase.getAllAirplanes();
         if (airplanes.isEmpty()) {
             return "No airplanes in database.";
         }
 
         StringBuilder sb = new StringBuilder("Current Airplanes:\n");
-        sb.append(String.format("%-5s %-15s %-15s %-10s\n", "Key", "Make", "Model", "Type"));
-        sb.append("------------------------------------------------\n");
         for (Airplane airplane : airplanes) {
-            sb.append(String.format("%-5d %-15s %-15s %-10s\n", 
-                airplane.getKey(), 
-                truncate(airplane.getMake(), 15),
-                truncate(airplane.getModel(), 15),
-                truncate(airplane.getAircraftType(), 10)));
+            sb.append(airplane).append("\n\n");
         }
         return sb.toString();
-    }
-
-    private String truncate(String str, int length) {
-        return str.length() > length ? str.substring(0, length-3) + "..." : str;
     }
 
     /**

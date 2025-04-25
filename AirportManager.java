@@ -205,19 +205,10 @@ public class AirportManager {
                 return;
             }
 
-            // Build the list of airports with keys
-            StringBuilder airportList = new StringBuilder("Available Airports:\n");
-            airportList.append(String.format("%-6s %-40s %-10s %-8s %-12s %-10s\n", 
-                "Key", "Name", "ICAO", "Latitude", "Longitude", "Fuel Type"));
-            airportList.append("----------------------------------------------------------------------------------------\n");
+            // Build formatted list matching the printAirportList format
+            StringBuilder airportList = new StringBuilder();
             for (Airport airport : allAirports) {
-                airportList.append(String.format("%-6d %-40s %-10s %-8.4f %-12.4f %-10s\n", 
-                    airport.getKey(), 
-                    airport.getName(), 
-                    airport.getIcao(),
-                    airport.getLatitude(),
-                    airport.getLongitude(),
-                    getFuelTypeDescription(airport.getFuelType())));
+                airportList.append(airport.toString()).append("\n\n");
             }
 
             // Create panel with both the list and input field
@@ -428,19 +419,10 @@ public class AirportManager {
                 return;
             }
 
-            // Build the list of airports with keys
-            StringBuilder airportList = new StringBuilder("Available Airports:\n");
-            airportList.append(String.format("%-6s %-40s %-10s %-8s %-12s %-10s\n", 
-                "Key", "Name", "ICAO", "Latitude", "Longitude", "Fuel Type"));
-            airportList.append("----------------------------------------------------------------------------------------\n");
+            // Build formatted list matching the printAirportList format
+            StringBuilder airportList = new StringBuilder();
             for (Airport airport : allAirports) {
-                airportList.append(String.format("%-6d %-40s %-10s %-8.4f %-12.4f %-10s\n", 
-                    airport.getKey(), 
-                    airport.getName(), 
-                    airport.getIcao(),
-                    airport.getLatitude(),
-                    airport.getLongitude(),
-                    getFuelTypeDescription(airport.getFuelType())));
+                airportList.append(airport.toString()).append("\n\n");
             }
 
             // Create panel with both the list and input field
