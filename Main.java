@@ -1,7 +1,6 @@
 // Import necessary libraries for GUI, file I/O, collections, and desktop operations
 import java.awt.Desktop;
 import java.io.*;
-import java.net.URI;
 import java.util.*;
 import javax.swing.*;
 
@@ -464,37 +463,107 @@ class FlightPlannerGUI {
     }
 
     // Method to show flight plan on OpenStreetMap in default browser
-    private void showFlightPlanOnOSM(List<Airport> route) {
-        if (route == null || route.isEmpty()) {
-            return; // Nothing to show
-        }
-    
-        try {
-            // Build OpenStreetMap URL with the flight path coordinates
-            StringBuilder urlBuilder = new StringBuilder("https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=");
-            
-            // Add all airports in the route to the URL
-            for (Airport airport : route) {
-                urlBuilder.append(airport.getLatitude())
-                         .append(",")
-                         .append(airport.getLongitude())
-                         .append(";");
-            }
-            
-            // Remove trailing semicolon and create final URL
-            String url = urlBuilder.substring(0, urlBuilder.length() - 1);
-            
-            // Open URL in default browser
-            Desktop.getDesktop().browse(new URI(url));
-        } catch (Exception e) {
-            // Show error if browser couldn't be opened
-            JOptionPane.showMessageDialog(null, 
-                "Could not open map in browser: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-        }
+// Method to show flight plan on OpenStreetMap in default browser with connected path
+// Method to show flight plan on OpenStreetMap in default browser
+// Method to show flight plan in a custom HTML map
+private void showFlightPlanOnOSM(List<Airport> route) {
+    if (route == null || route.isEmpty()) {
+        return;
     }
 
+    try {
+        // Create a temporary HTML file
+        File htmlFile = File.createTempFile("flightplan", ".html");
+        
+        // Write the HTML content
+        try (PrintWriter writer = new PrintWriter(htmlFile)) {
+            writer.println(generateFlightPlanHTML(route));
+        }
+        
+        // Open in default browser
+        Desktop.getDesktop().browse(htmlFile.toURI());
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, 
+            "Could not display flight plan: " + e.getMessage(),
+            "Error",
+            JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+// Method to generate HTML with flight path visualization
+private String generateFlightPlanHTML(List<Airport> route) {
+    StringBuilder sb = new StringBuilder();
+    
+    sb.append("<!DOCTYPE html>\n");
+    sb.append("<html>\n");
+    sb.append("<head>\n");
+    sb.append("    <title>Flight Plan Visualization</title>\n");
+    sb.append("    <meta charset=\"utf-8\">\n");
+    sb.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+    sb.append("    <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.7.1/dist/leaflet.css\"/>\n");
+    sb.append("    <style>\n");
+    sb.append("        #map { height: 100vh; width: 100%; }\n");
+    sb.append("        body { margin: 0; padding: 0; }\n");
+    sb.append("        .airport-info { font-weight: bold; }\n");
+    sb.append("    </style>\n");
+    sb.append("</head>\n");
+    sb.append("<body>\n");
+    sb.append("    <div id=\"map\"></div>\n");
+    sb.append("    <script src=\"https://unpkg.com/leaflet@1.7.1/dist/leaflet.js\"></script>\n");
+    sb.append("    <script>\n");
+    sb.append("        // Airport data\n");
+    sb.append("        const airports = [\n");
+    
+    // Add airport data
+    for (Airport airport : route) {
+        sb.append("            {\n");
+        sb.append("                name: \"").append(escapeJavaScript(airport.getName())).append("\",\n");
+        sb.append("                icao: \"").append(escapeJavaScript(airport.getIcao())).append("\",\n");
+        sb.append("                lat: ").append(airport.getLatitude()).append(",\n");
+        sb.append("                lng: ").append(airport.getLongitude()).append("\n");
+        sb.append("            },\n");
+    }
+    
+    sb.append("        ];\n");
+    sb.append("\n");
+    sb.append("        // Initialize map\n");
+    sb.append("        const map = L.map('map').setView([airports[0].lat, airports[0].lng], 7);\n");
+    sb.append("        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n");
+    sb.append("            attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors'\n");
+    sb.append("        }).addTo(map);\n");
+    sb.append("\n");
+    sb.append("        // Add flight path\n");
+    sb.append("        const flightPath = L.polyline(\n");
+    sb.append("            airports.map(ap => [ap.lat, ap.lng]),\n");
+    sb.append("            {color: 'red', weight: 3, dashArray: '10,10'}\n");
+    sb.append("        ).addTo(map);\n");
+    sb.append("\n");
+    sb.append("        // Add markers for each airport\n");
+    sb.append("        airports.forEach(ap => {\n");
+    sb.append("            L.marker([ap.lat, ap.lng])\n");
+    sb.append("                .addTo(map)\n");
+    sb.append("                .bindPopup(`<div class=\"airport-info\">${ap.name}<br>${ap.icao}</div>`);\n");
+    sb.append("        });\n");
+    sb.append("\n");
+    sb.append("        // Fit map to flight path\n");
+    sb.append("        map.fitBounds(flightPath.getBounds());\n");
+    sb.append("    </script>\n");
+    sb.append("</body>\n");
+    sb.append("</html>\n");
+    
+    return sb.toString();
+}
+
+// Helper method to escape strings for JavaScript
+private String escapeJavaScript(String input) {
+    if (input == null) return "";
+    return input.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("'", "\\'")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+}
     // Method to find suitable refueling stops between two airports
     private List<Airport> findRefuelStops(Airport from, Airport to, Map<Integer, Airport> airports, 
                                         Airplane airplane, double maxLegDistance) {
