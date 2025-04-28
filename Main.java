@@ -462,10 +462,7 @@ class FlightPlannerGUI {
         // Otherwise, return to main menu
     }
 
-    // Method to show flight plan on OpenStreetMap in default browser
-// Method to show flight plan on OpenStreetMap in default browser with connected path
-// Method to show flight plan on OpenStreetMap in default browser
-// Method to show flight plan in a custom HTML map
+// Method to show flight plan on OpenStreetMap a custom HTML map
 private void showFlightPlanOnOSM(List<Airport> route) {
     if (route == null || route.isEmpty()) {
         return;
